@@ -12,7 +12,7 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-def fetch_cot_snapshot(date: str = '2024-04-23', oi_threshold: int = 200_000) -> pd.DataFrame:
+def fetch_cot_snapshot(date: str = '2024-04-23', open_interest_threshold: int = 200_000) -> pd.DataFrame:
     df = nasdaqdatalink.get_table("QDL/FON", date=date)
     """
     Fetches COT data and filters for contracts with:
