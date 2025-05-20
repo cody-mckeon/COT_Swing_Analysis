@@ -1,6 +1,10 @@
 import os
 import pandas as pd
-from src.cot_fetcher import fetch_cot_snapshot
+
+# Dynamically add the src directory to the path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
+from cot_fetcher import fetch_cot_snapshot
 
 
 def test_fetch_cot_snapshot():
