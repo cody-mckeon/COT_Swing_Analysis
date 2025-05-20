@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import sys
 
 # Dynamically add the src directory to the path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
