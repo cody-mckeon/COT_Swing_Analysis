@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from src.cot_fetcher import fetch_cot_snapshot
+from cot_fetcher.fetch import fetch_cot_snapshot
 
 
 def test_fetch_cot_snapshot():
