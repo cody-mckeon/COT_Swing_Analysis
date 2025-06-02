@@ -1,1 +1,3 @@
 nasdaq-data-link
+pandas
+pytest
