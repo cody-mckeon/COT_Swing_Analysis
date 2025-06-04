@@ -1,8 +1,10 @@
 import pandas as pd
+import pytest
 from src.data.merge_cot_price import merge_cot_with_price
 
 
-def test_merge(tmp_path):
+@pytest.mark.parametrize("ticker", ["MGC=F", "MCL=F"])
+def test_merge(ticker, tmp_path):
     cot = pd.DataFrame({
         'report_date': pd.date_range('2024-01-05', periods=3, freq='W-FRI'),
         'open_interest': [100, 120, 110],
@@ -18,7 +20,7 @@ def test_merge(tmp_path):
         'etf_close': [50,51,52]
     })
     cot_path = tmp_path / 'cot.csv'
-    price_path = tmp_path / 'price.csv'
+    price_path = tmp_path / f"price_{ticker.replace('=', '_')}.csv"
     out_path = tmp_path / 'out.csv'
     cot.to_csv(cot_path, index=False)
     price.to_csv(price_path, index=False)
