@@ -165,6 +165,13 @@ def build_full_dataset(raw_dir: str, processed_csv: str):
 
     # Concatenate them all
     big = pd.concat(pieces, ignore_index=True)
+
+    # ─── ONLY KEEP GOLD & CRUDE ───────────────────────────────────────────
+    # (CFTC “Contract Market Codes” for Gold & Crude in our Disaggregated‐Futures data)
+    GOLD_CODE  = "088691"   # Gold futures
+    CRUDE_CODE = "067651"   # Crude Oil (Light Sweet) futures
+    big = big[ big["contract_code"].isin([GOLD_CODE, CRUDE_CODE]) ].copy()
+    # ────────────────────────────────────────────────────────────────────
     big = big.sort_values(["report_date", "contract_code"]).reset_index(drop=True)
 
     # Ensure output directory exists
