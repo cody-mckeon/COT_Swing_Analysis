@@ -28,6 +28,8 @@ COT_Swing_Analysis/
    # micro gold and micro crude oil
    python -m src.data.load_price MGC=F
    python -m src.data.load_price MCL=F
+   # if you hit rate limits from Yahoo Finance, increase the retry count
+   python -m src.data.load_price MGC=F --max-retries 5 --retry-delay 10
    ```
 3. Merge, build features and train a model
    ```bash
