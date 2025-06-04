@@ -28,18 +28,48 @@ def fetch_weekly_close(
     logger.info(
         f"Downloading price for {ticker} since {start_date} via yfinance…"
     )
+
+    df = pd.DataFrame()
+    for attempt in range(1, max_retries + 1):
+        try:
+            df = yf.download(
+                ticker,
+                start=start_date,
+                progress=False,
+                auto_adjust=True,
+                threads=False,
+            )
+
     for attempt in range(1, max_retries + 1):
         try:
             df = yf.download(
                 ticker, start=start_date, progress=False, auto_adjust=True
             )
             break
+
         except YFRateLimitError as exc:
             if attempt == max_retries:
                 raise RuntimeError(
                     f"Rate limit hit for {ticker} after {max_retries} attempts"
                 ) from exc
             wait = retry_delay * attempt
+
+            logger.warning(
+                f"Rate limited, retrying in {wait}s (attempt {attempt}/{max_retries})"
+            )
+            time.sleep(wait)
+            continue
+
+        if not df.empty:
+            break
+        if attempt == max_retries:
+            raise RuntimeError(f"No data found for {ticker}")
+        wait = retry_delay * attempt
+        logger.warning(
+            f"Empty response, retrying in {wait}s (attempt {attempt}/{max_retries})"
+        )
+        time.sleep(wait)
+
             logger.warning(f"Rate limited, retrying in {wait}s (attempt {attempt}/{max_retries})")
             time.sleep(wait)
     else:
@@ -47,6 +77,7 @@ def fetch_weekly_close(
         raise RuntimeError(f"Failed to download data for {ticker}")
     if df.empty:
         raise RuntimeError(f"No data found for {ticker}")
+
     df = df[["Close"]].rename(columns={"Close": "etf_close"})
     df.index = pd.to_datetime(df.index)
     weekly = df["etf_close"].resample("W-FRI").last().dropna().reset_index().rename(columns={"index": "week"})
