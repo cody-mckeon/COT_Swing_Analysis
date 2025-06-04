@@ -1,8 +1,0 @@
-nasdaq-data-link
-pandas
-pytest
-scikit-learn
-matplotlib
-seaborn
-loguru
-quandl
