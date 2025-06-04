@@ -22,6 +22,7 @@ COT_Swing_Analysis/
    ```bash
    pip install -r requirements.txt
    ```
+
 2. Build the dataset and fetch micro-futures prices:
    ```bash
    python data/make_dataset.py --raw-dir data/raw --out-csv data/processed/cot_disagg_futures_2016_2025.csv
@@ -41,6 +42,9 @@ COT_Swing_Analysis/
        --out data/processed/features_gold.csv
    # repeat for crude oil if desired
    python -m src.models.train_model --features data/processed/features_gold.csv --model models/gold_crude_model.joblib
+=======
+
+
    ```
 4. Serve predictions
    ```bash
