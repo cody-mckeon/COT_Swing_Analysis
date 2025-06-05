@@ -30,9 +30,29 @@ COT_Swing_Analysis/
    ```
 3. Reproduce the entire pipeline with DVC
    ```bash
+
+   # example for gold
+   python -m src.data.merge_cot_price \
+       --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv \
+       --price data/prices/gc_weekly.csv \
+       --out data/processed/merged_gc.csv \
+       --market "GOLD"
+   python -m src.features.build_features \
+       --merged data/processed/merged_gc.csv \
+       --out data/processed/features_gc.csv
+   python -m src.models.train_model \
+       --features data/processed/features_gc.csv \
+       --model models/model_gc.joblib
+   # repeat for crude oil with the CL price file and market filter
+
+   dvc repro -f
+
+   ```
+4. Reproduce the entire pipeline with DVC
+   ```bash
    dvc repro -f
    ```
-4. Serve predictions
+5. Serve predictions
    ```bash
    uvicorn src.api.app:app --reload
    ```
