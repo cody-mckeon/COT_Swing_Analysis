@@ -3,7 +3,7 @@ import time
 import pandas as pd
 import yfinance as yf
 import logging
-from yfinance.exceptions import YFRateLimitError
+from yfinance.exceptions import YFRateLimitError, YFInvalidPeriodError
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -29,9 +29,24 @@ def fetch_weekly_close(
         f"Downloading price for {ticker} since {start_date} via yfinance…"
     )
 
-    df = pd.DataFrame()
-    for attempt in range(1, max_retries + 1):
+    attempt = 0
+    while attempt < max_retries:
+        logger.info(
+            f"[Attempt {attempt+1}/{max_retries}] Downloading price for {ticker} since {start_date} (explicit start/end)…"
+        )
         try:
+            df = yf.download(
+                ticker,
+                start=start_date,
+                end=pd.Timestamp.today().strftime("%Y-%m-%d"),
+                progress=False,
+                auto_adjust=True,
+                threads=False,
+            )
+        except YFInvalidPeriodError as e:
+            logger.warning(
+                f"⚠️ YFInvalidPeriodError for {ticker} with explicit end: {e}. Retrying with start-only…"
+            )
             df = yf.download(
                 ticker,
                 start=start_date,
@@ -39,35 +54,58 @@ def fetch_weekly_close(
                 auto_adjust=True,
                 threads=False,
             )
-            if df.empty:
-                raise ValueError("empty response")
-            break
-        except (YFRateLimitError, Exception) as exc:
-            if attempt == max_retries:
-                raise RuntimeError(
-                    f"Failed to download data for {ticker} after {max_retries} attempts"
-                ) from exc
-            wait = retry_delay * attempt
-            logger.warning(
-                f"Download failed ({exc}), retrying in {wait}s (attempt {attempt}/{max_retries})"
+
+        try:
+            if df is None or df.empty:
+                raise ValueError(f"No data returned for {ticker} (empty response)")
+
+            df = df[["Close"]].rename(columns={"Close": "etf_close"})
+            df.index = pd.to_datetime(df.index)
+            weekly = (
+                df["etf_close"]
+                .resample("W-FRI")
+                .last()
+                .dropna()
+                .reset_index()
+                .rename(columns={"index": "week"})
             )
-            time.sleep(wait)
-            continue
-    else:
-        raise RuntimeError(f"Failed to download data for {ticker}")
+            os.makedirs(save_dir, exist_ok=True)
+            safe_name = ticker.replace("=", "_").replace("/", "_")
+            out_path = os.path.join(save_dir, f"{safe_name}.csv")
+            weekly.to_csv(out_path, index=False)
+            logger.info(f"Saved weekly prices to {out_path}")
+            return weekly
 
-    if df.empty:
-        raise RuntimeError(f"No data found for {ticker}")
+        except YFRateLimitError as e:
+            attempt += 1
+            if attempt < max_retries:
+                logger.warning(
+                    f"⚠️ Rate‑limited by yfinance on {ticker}: {e}. Retrying in {retry_delay} seconds…"
+                )
+                time.sleep(retry_delay)
+                continue
+            else:
+                logger.error(
+                    f"❌ Exhausted retries for {ticker} (rate-limit). Giving up."
+                )
+                raise
+        except Exception as e:
+            attempt += 1
+            if attempt < max_retries:
+                logger.warning(
+                    f"⚠️ Download failed for {ticker}: {e}. Retrying in {retry_delay} seconds…"
+                )
+                time.sleep(retry_delay)
+                continue
+            else:
+                logger.error(
+                    f"❌ Exhausted retries for {ticker}. Last error: {e}"
+                )
+                raise
 
-    df = df[["Close"]].rename(columns={"Close": "etf_close"})
-    df.index = pd.to_datetime(df.index)
-    weekly = df["etf_close"].resample("W-FRI").last().dropna().reset_index().rename(columns={"index": "week"})
-    os.makedirs(save_dir, exist_ok=True)
-    safe_name = ticker.replace("=", "_").replace("/", "_")
-    out_path = os.path.join(save_dir, f"{safe_name}.csv")
-    weekly.to_csv(out_path, index=False)
-    logger.info(f"Saved weekly prices to {out_path}")
-    return weekly
+    raise RuntimeError(
+        f"Failed to fetch data for {ticker} after {max_retries} attempts"
+    )
 
 if __name__ == "__main__":
     import argparse
