@@ -14,8 +14,8 @@ def test_merge(tmp_path):
         'sd_short': [2,3,1]
     })
     price = pd.DataFrame({
-        'date': pd.date_range('2024-01-05', periods=3, freq='W-FRI'),
-        'close': [50, 51, 52]
+        'Date': pd.date_range('2024-01-01', periods=20, freq='D'),
+        'Close': range(20)
     })
     cot_path = tmp_path / 'cot.csv'
     price_path = tmp_path / 'price.csv'
@@ -25,4 +25,5 @@ def test_merge(tmp_path):
     merged = merge_cot_with_price(str(cot_path), str(price_path), str(out_path))
     assert not merged.empty
     assert 'etf_close' in merged.columns
+    assert 'week' in merged.columns
     assert out_path.exists()

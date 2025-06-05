@@ -32,10 +32,10 @@ COT_Swing_Analysis/
    ```bash
 
    # example for gold
-   python -m src.data.merge_cot_price \
-       --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv \
-       --price data/prices/gc_weekly.csv \
-       --out data/processed/merged_gc.csv \
+    python -m src.data.merge_cot_price \
+        --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv \
+        --price data/prices/gc_daily.csv \
+        --out data/processed/merged_gc.csv \
        --market "GOLD"
    python -m src.features.build_features \
        --merged data/processed/merged_gc.csv \
