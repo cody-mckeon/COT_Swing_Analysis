@@ -14,14 +14,14 @@ def merge_cot_with_price(
     out_csv: str,
     market: str | None = None,
 ) -> pd.DataFrame:
-    """Merge processed COT data with weekly prices.
+    """Merge processed COT data with daily prices.
 
     Parameters
     ----------
     cot_csv:
         Path to the CSV containing disaggregated COT data for multiple markets.
     price_csv:
-        Path to the weekly price data for a single instrument.
+        Path to the daily price data for a single instrument.
     out_csv:
         Where the merged dataset should be written.
     market:
@@ -32,17 +32,27 @@ def merge_cot_with_price(
     cot = pd.read_csv(cot_csv, parse_dates=["report_date"])
     if market:
         cot = cot[cot["market_name"].str.contains(market, case=False, na=False)]
-    # Align COT report to Friday of the same week for merging with prices
-    cot["week"] = cot["report_date"] + pd.offsets.Week(weekday=4)
 
     price = pd.read_csv(price_csv)
-    if "date" in price.columns:
-        price["date"] = pd.to_datetime(price["date"])
-    if "week" in price.columns:
-        price["week"] = pd.to_datetime(price["week"])
-    price = price.rename(columns={"date": "week", "close": "etf_close"})
-    merged = pd.merge(cot, price, on="week", how="inner")
-    merged = merged.sort_values("week").reset_index(drop=True)
+    if "Date" in price.columns:
+        price["report_date"] = pd.to_datetime(price["Date"])
+    elif "date" in price.columns:
+        price["report_date"] = pd.to_datetime(price["date"])
+    elif "week" in price.columns:
+        price["report_date"] = pd.to_datetime(price["week"])
+    else:
+        raise KeyError("Price CSV must contain a date column")
+
+    if "Close" in price.columns:
+        price = price.rename(columns={"Close": "etf_close"})
+    elif "close" in price.columns:
+        price = price.rename(columns={"close": "etf_close"})
+
+    price = price[["report_date", "etf_close"]]
+
+    merged = pd.merge(cot, price, on="report_date", how="inner")
+    merged["week"] = merged["report_date"] + pd.offsets.Week(weekday=4)
+    merged = merged.sort_values("report_date").reset_index(drop=True)
     merged.to_csv(out_csv, index=False)
     logger.info(f"Saved merged COT and price data to {out_csv}")
     return merged
