@@ -1,0 +1,44 @@
+stages:
+  merge_cl:
+    cmd: python -m src.data.merge_cot_price --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv --price data/prices/cl_weekly.csv --out data/processed/merged_cl.csv --market "CRUDE OIL"
+    deps:
+      - data/processed/cot_disagg_futures_gold_crude_2016_2025.csv
+      - data/prices/cl_weekly.csv
+    outs:
+      - data/processed/merged_cl.csv
+
+  merge_gc:
+    cmd: python -m src.data.merge_cot_price --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv --price data/prices/gc_weekly.csv --out data/processed/merged_gc.csv --market "GOLD"
+    deps:
+      - data/processed/cot_disagg_futures_gold_crude_2016_2025.csv
+      - data/prices/gc_weekly.csv
+    outs:
+      - data/processed/merged_gc.csv
+
+  features_cl:
+    cmd: python -m src.features.build_features --merged data/processed/merged_cl.csv --out data/processed/features_cl.csv
+    deps:
+      - data/processed/merged_cl.csv
+    outs:
+      - data/processed/features_cl.csv
+
+  features_gc:
+    cmd: python -m src.features.build_features --merged data/processed/merged_gc.csv --out data/processed/features_gc.csv
+    deps:
+      - data/processed/merged_gc.csv
+    outs:
+      - data/processed/features_gc.csv
+
+  train_cl:
+    cmd: python -m src.models.train_model --features data/processed/features_cl.csv --model models/model_cl.joblib
+    deps:
+      - data/processed/features_cl.csv
+    outs:
+      - models/model_cl.joblib
+
+  train_gc:
+    cmd: python -m src.models.train_model --features data/processed/features_gc.csv --model models/model_gc.joblib
+    deps:
+      - data/processed/features_gc.csv
+    outs:
+      - models/model_gc.joblib

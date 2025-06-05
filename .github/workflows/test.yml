@@ -18,6 +18,14 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    - name: Run CLI pipeline
+      run: |
+        python -m src.data.merge_cot_price --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv --price data/prices/cl_weekly.csv --out data/processed/merged_cl.csv --market "CRUDE OIL"
+        python -m src.features.build_features --merged data/processed/merged_cl.csv --out data/processed/features_cl.csv
+        python -m src.models.train_model --features data/processed/features_cl.csv --model models/model_cl.joblib
+        python -m src.data.merge_cot_price --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv --price data/prices/gc_weekly.csv --out data/processed/merged_gc.csv --market "GOLD"
+        python -m src.features.build_features --merged data/processed/merged_gc.csv --out data/processed/features_gc.csv
+        python -m src.models.train_model --features data/processed/features_gc.csv --model models/model_gc.joblib
 
     - name: Run tests
       run: |
