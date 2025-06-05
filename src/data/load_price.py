@@ -39,42 +39,23 @@ def fetch_weekly_close(
                 auto_adjust=True,
                 threads=False,
             )
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            df = yf.download(
-                ticker, start=start_date, progress=False, auto_adjust=True
-            )
+            if df.empty:
+                raise ValueError("empty response")
             break
-
-        except YFRateLimitError as exc:
+        except (YFRateLimitError, Exception) as exc:
             if attempt == max_retries:
                 raise RuntimeError(
-                    f"Rate limit hit for {ticker} after {max_retries} attempts"
+                    f"Failed to download data for {ticker} after {max_retries} attempts"
                 ) from exc
             wait = retry_delay * attempt
-
             logger.warning(
-                f"Rate limited, retrying in {wait}s (attempt {attempt}/{max_retries})"
+                f"Download failed ({exc}), retrying in {wait}s (attempt {attempt}/{max_retries})"
             )
             time.sleep(wait)
             continue
-
-        if not df.empty:
-            break
-        if attempt == max_retries:
-            raise RuntimeError(f"No data found for {ticker}")
-        wait = retry_delay * attempt
-        logger.warning(
-            f"Empty response, retrying in {wait}s (attempt {attempt}/{max_retries})"
-        )
-        time.sleep(wait)
-
-            logger.warning(f"Rate limited, retrying in {wait}s (attempt {attempt}/{max_retries})")
-            time.sleep(wait)
     else:
-        # Should never reach here
         raise RuntimeError(f"Failed to download data for {ticker}")
+
     if df.empty:
         raise RuntimeError(f"No data found for {ticker}")
 
