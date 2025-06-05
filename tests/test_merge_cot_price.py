@@ -14,8 +14,8 @@ def test_merge(tmp_path):
         'sd_short': [2,3,1]
     })
     price = pd.DataFrame({
-        'week': pd.date_range('2024-01-05', periods=3, freq='W-FRI'),
-        'etf_close': [50,51,52]
+        'date': pd.date_range('2024-01-05', periods=3, freq='W-FRI'),
+        'close': [50, 51, 52]
     })
     cot_path = tmp_path / 'cot.csv'
     price_path = tmp_path / 'price.csv'
