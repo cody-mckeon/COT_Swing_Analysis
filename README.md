@@ -25,16 +25,15 @@ COT_Swing_Analysis/
 2. Build the dataset and fetch micro-futures prices:
    ```bash
    python data/make_dataset.py --raw-dir data/raw --out-csv data/processed/cot_disagg_futures_2016_2025.csv
-   # continuous front-month futures via Nasdaq Data Link
-   python -m src.data.load_chris_cli CHRIS/CME_GC1
-   python -m src.data.load_chris_cli CHRIS/CME_CL1
+   # download crude and gold futures prices from Yahoo Finance
+   python -m src.data.load_price
    ```
 3. Merge, build features and train a model
    ```bash
    # example for gold
    python -m src.data.merge_cot_price \
        --cot data/processed/cot_disagg_futures_2016_2025.csv \
-       --price data/prices/CHRIS_CME_GC1_weekly.csv \
+       --price data/prices/gc_weekly.csv \
        --out data/processed/merged_gold.csv
    python -m src.features.build_features \
        --merged data/processed/merged_gold.csv \
