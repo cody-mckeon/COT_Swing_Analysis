@@ -8,7 +8,7 @@ COT_Swing_Analysis/
 ├── data/
 │   ├── raw/               # yearly COT Excel files
 │   ├── processed/         # cleaned datasets and features
-│   └── prices/            # price data downloaded from yfinance
+│   └── prices/            # price data downloaded from Nasdaq Data Link
 ├── src/
 │   ├── data/              # dataset utilities
 │   ├── features/          # feature engineering
@@ -25,18 +25,16 @@ COT_Swing_Analysis/
 2. Build the dataset and fetch micro-futures prices:
    ```bash
    python data/make_dataset.py --raw-dir data/raw --out-csv data/processed/cot_disagg_futures_2016_2025.csv
-   # micro gold and micro crude oil
-   python -m src.data.load_price MGC=F
-   python -m src.data.load_price MCL=F
-   # if you hit rate limits from Yahoo Finance, increase the retry count
-   python -m src.data.load_price MGC=F --max-retries 5 --retry-delay 10
+   # continuous front-month futures via Nasdaq Data Link
+   python -m src.data.load_chris_cli CHRIS/CME_GC1
+   python -m src.data.load_chris_cli CHRIS/CME_CL1
    ```
 3. Merge, build features and train a model
    ```bash
    # example for gold
    python -m src.data.merge_cot_price \
        --cot data/processed/cot_disagg_futures_2016_2025.csv \
-       --price data/prices/MGC_F.csv \
+       --price data/prices/CHRIS_CME_GC1_weekly.csv \
        --out data/processed/merged_gold.csv
    python -m src.features.build_features \
        --merged data/processed/merged_gold.csv \
