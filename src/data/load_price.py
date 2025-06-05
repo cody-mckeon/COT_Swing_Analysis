@@ -1,13 +1,116 @@
 """Deprecated wrapper that now delegates to CHRIS futures downloader."""
 import os
+
 import argparse
 from src.data.load_chris import fetch_weekly_chris
+
+import time
+import pandas as pd
+import yfinance as yf
+import logging
+from yfinance.exceptions import YFRateLimitError, YFInvalidPeriodError
+
 
 
 def fetch_weekly_close(dataset_code: str, start_date: str = "2016-01-01", save_dir: str = "data/prices/"):
     slug = dataset_code.replace('/', '_')
     out_path = os.path.join(save_dir, f"{slug}_weekly.csv")
     return fetch_weekly_chris(dataset_code, start_date=start_date, api_key=os.getenv("NASDAQ_DATA_LINK"), save_path=out_path)
+
+
+def fetch_weekly_close(
+    ticker: str,
+    start_date: str = "2016-01-01",
+    save_dir: str = "data/prices/",
+    max_retries: int = 3,
+    retry_delay: int = 5,
+) -> pd.DataFrame:
+    """Download daily prices for ``ticker`` and resample to weekly Friday close.
+
+    The function retries downloads when Yahoo Finance responds with a
+    :class:`~yfinance.exceptions.YFRateLimitError`.
+    """
+    logger.info(
+        f"Downloading price for {ticker} since {start_date} via yfinance…"
+    )
+
+    attempt = 0
+    while attempt < max_retries:
+        logger.info(
+            f"[Attempt {attempt+1}/{max_retries}] Downloading price for {ticker} since {start_date} (explicit start/end)…"
+        )
+        try:
+            df = yf.download(
+                ticker,
+                start=start_date,
+                end=pd.Timestamp.today().strftime("%Y-%m-%d"),
+                progress=False,
+                auto_adjust=True,
+                threads=False,
+            )
+        except YFInvalidPeriodError as e:
+            logger.warning(
+                f"⚠️ YFInvalidPeriodError for {ticker} with explicit end: {e}. Retrying with start-only…"
+            )
+            df = yf.download(
+                ticker,
+                start=start_date,
+                progress=False,
+                auto_adjust=True,
+                threads=False,
+            )
+
+        try:
+            if df is None or df.empty:
+                raise ValueError(f"No data returned for {ticker} (empty response)")
+
+            df = df[["Close"]].rename(columns={"Close": "etf_close"})
+            df.index = pd.to_datetime(df.index)
+            weekly = (
+                df["etf_close"]
+                .resample("W-FRI")
+                .last()
+                .dropna()
+                .reset_index()
+                .rename(columns={"index": "week"})
+            )
+            os.makedirs(save_dir, exist_ok=True)
+            safe_name = ticker.replace("=", "_").replace("/", "_")
+            out_path = os.path.join(save_dir, f"{safe_name}.csv")
+            weekly.to_csv(out_path, index=False)
+            logger.info(f"Saved weekly prices to {out_path}")
+            return weekly
+
+        except YFRateLimitError as e:
+            attempt += 1
+            if attempt < max_retries:
+                logger.warning(
+                    f"⚠️ Rate‑limited by yfinance on {ticker}: {e}. Retrying in {retry_delay} seconds…"
+                )
+                time.sleep(retry_delay)
+                continue
+            else:
+                logger.error(
+                    f"❌ Exhausted retries for {ticker} (rate-limit). Giving up."
+                )
+                raise
+        except Exception as e:
+            attempt += 1
+            if attempt < max_retries:
+                logger.warning(
+                    f"⚠️ Download failed for {ticker}: {e}. Retrying in {retry_delay} seconds…"
+                )
+                time.sleep(retry_delay)
+                continue
+            else:
+                logger.error(
+                    f"❌ Exhausted retries for {ticker}. Last error: {e}"
+                )
+                raise
+
+    raise RuntimeError(
+        f"Failed to fetch data for {ticker} after {max_retries} attempts"
+    )
 
 
 if __name__ == "__main__":
