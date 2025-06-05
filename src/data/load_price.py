@@ -19,10 +19,15 @@ This will create files like ``cl_daily.csv`` and ``cl_weekly.csv`` in the
 
 import os
 import time
+import argparse
 import logging
 import pandas as pd
-import yfinance as yf
-from yfinance import YFRateLimitError
+
+try:
+    from yfinance.exceptions import YFRateLimitError, YFInvalidPeriodError
+except Exception:  # fall back if yfinance lacks these exceptions
+    YFRateLimitError = Exception
+    YFInvalidPeriodError = Exception
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 _handler = logging.StreamHandler()
@@ -68,6 +73,9 @@ def fetch_daily_history(ticker: str, start: str, end: str, max_retries: int, ret
                 raise
             logger.warning(f"Rate limit error for {ticker}: {e}. Retrying in {retry_delay}s…")
             time.sleep(retry_delay)
+        except YFInvalidPeriodError as e:
+            # Some tickers require omitting the end date
+            logger.warning(f"YFInvalidPeriodError for {ticker} with explicit end: {e}. Retrying with start-only…")
         except Exception as e:
             attempt += 1
             if attempt >= max_retries:
