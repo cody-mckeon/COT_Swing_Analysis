@@ -22,6 +22,7 @@ import time
 import argparse
 import logging
 import pandas as pd
+import yfinance as yf
 
 try:
     from yfinance.exceptions import YFRateLimitError, YFInvalidPeriodError

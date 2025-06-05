@@ -28,18 +28,9 @@ COT_Swing_Analysis/
    # download crude and gold futures prices from Yahoo Finance
    python -m src.data.load_price
    ```
-3. Merge, build features and train a model
+3. Reproduce the entire pipeline with DVC
    ```bash
-   # example for gold
-   python -m src.data.merge_cot_price \
-       --cot data/processed/cot_disagg_futures_2016_2025.csv \
-       --price data/prices/gc_weekly.csv \
-       --out data/processed/merged_gold.csv
-   python -m src.features.build_features \
-       --merged data/processed/merged_gold.csv \
-       --out data/processed/features_gold.csv
-   # repeat for crude oil if desired
-   python -m src.models.train_model --features data/processed/features_gold.csv --model models/gold_crude_model.joblib
+   dvc repro -f
    ```
 4. Serve predictions
    ```bash

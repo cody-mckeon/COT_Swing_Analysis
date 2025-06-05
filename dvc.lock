@@ -1,0 +1,90 @@
+schema: '2.0'
+stages:
+  merge_cl:
+    cmd: python -m src.data.merge_cot_price --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv
+      --price data/prices/cl_weekly.csv --out data/processed/merged_cl.csv --market
+      "CRUDE OIL"
+    deps:
+    - path: data/prices/cl_weekly.csv
+      hash: md5
+      md5: 93efafa0c65e8104d4a529f44bd51f0b
+      size: 96
+    - path: data/processed/cot_disagg_futures_gold_crude_2016_2025.csv
+      hash: md5
+      md5: 26ee077f5ca47efadac06125c05bef99
+      size: 166368
+    outs:
+    - path: data/processed/merged_cl.csv
+      hash: md5
+      md5: cc2522165052f612de769ea433bd2ab6
+      size: 1148
+  merge_gc:
+    cmd: python -m src.data.merge_cot_price --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv
+      --price data/prices/gc_weekly.csv --out data/processed/merged_gc.csv --market
+      "GOLD"
+    deps:
+    - path: data/prices/gc_weekly.csv
+      hash: md5
+      md5: b3df74dd5164913f3fb57dee99c12ac3
+      size: 101
+    - path: data/processed/cot_disagg_futures_gold_crude_2016_2025.csv
+      hash: md5
+      md5: 26ee077f5ca47efadac06125c05bef99
+      size: 166368
+    outs:
+    - path: data/processed/merged_gc.csv
+      hash: md5
+      md5: 628cb4d78741ef52b17dbce845601019
+      size: 975
+  features_cl:
+    cmd: python -m src.features.build_features --merged data/processed/merged_cl.csv
+      --out data/processed/features_cl.csv
+    deps:
+    - path: data/processed/merged_cl.csv
+      hash: md5
+      md5: cc2522165052f612de769ea433bd2ab6
+      size: 1148
+    outs:
+    - path: data/processed/features_cl.csv
+      hash: md5
+      md5: 1bfd44f2a4a451f477a16c37001cd393
+      size: 1337
+  features_gc:
+    cmd: python -m src.features.build_features --merged data/processed/merged_gc.csv
+      --out data/processed/features_gc.csv
+    deps:
+    - path: data/processed/merged_gc.csv
+      hash: md5
+      md5: 628cb4d78741ef52b17dbce845601019
+      size: 975
+    outs:
+    - path: data/processed/features_gc.csv
+      hash: md5
+      md5: e4ad7c03873b88d8c2a4480fa22ac414
+      size: 1197
+  train_cl:
+    cmd: python -m src.models.train_model --features data/processed/features_cl.csv
+      --model models/model_cl.joblib
+    deps:
+    - path: data/processed/features_cl.csv
+      hash: md5
+      md5: 1bfd44f2a4a451f477a16c37001cd393
+      size: 1337
+    outs:
+    - path: models/model_cl.joblib
+      hash: md5
+      md5: 2aa44355202b07eed34e63e0108c96ef
+      size: 61746
+  train_gc:
+    cmd: python -m src.models.train_model --features data/processed/features_gc.csv
+      --model models/model_gc.joblib
+    deps:
+    - path: data/processed/features_gc.csv
+      hash: md5
+      md5: e4ad7c03873b88d8c2a4480fa22ac414
+      size: 1197
+    outs:
+    - path: models/model_gc.joblib
+      hash: md5
+      md5: fbd3300e5276c933e0a95795612dd57a
+      size: 58386
