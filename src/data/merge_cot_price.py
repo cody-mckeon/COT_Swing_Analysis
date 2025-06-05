@@ -9,10 +9,11 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 def merge_cot_with_price(cot_csv: str, price_csv: str, out_csv: str) -> pd.DataFrame:
-    """Merge processed COT data with price data on week."""
+    """Merge processed COT data with weekly CHRIS prices."""
     cot = pd.read_csv(cot_csv, parse_dates=["report_date"])
-    price = pd.read_csv(price_csv, parse_dates=["week"])
+    price = pd.read_csv(price_csv, parse_dates=["date"])
     cot = cot.rename(columns={"report_date": "week"})
+    price = price.rename(columns={"date": "week", "close": "etf_close"})
     merged = pd.merge(cot, price, on="week", how="inner")
     merged = merged.sort_values("week").reset_index(drop=True)
     merged.to_csv(out_csv, index=False)
