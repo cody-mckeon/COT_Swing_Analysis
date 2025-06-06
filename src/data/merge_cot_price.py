@@ -74,41 +74,19 @@ def merge_cot_with_price(
 
 
     price = _load_and_clean_price(price_csv)
+
     if "date" not in price.columns:
-
-    # Detect if the price CSV has a two-line header starting with "Ticker".
-    with open(price_csv, newline="") as fh:
-        reader = csv.reader(fh)
-        first_row = next(reader, [])
-        second_row = next(reader, [])
-
-    if first_row and first_row[0].strip().lower() == "ticker":
-        # Some price CSVs include a leading row like "Ticker,GC=F" followed by
-        # the actual column names on the next line. If the first two rows have
-        # the same length we can read them as a multi-index header and then
-        # drop the first level. Otherwise we skip the first row entirely.
-        if second_row and len(first_row) == len(second_row):
-            price = pd.read_csv(price_csv, header=[0, 1])
-            if isinstance(price.columns, pd.MultiIndex):
-                price.columns = price.columns.get_level_values(-1)
-        else:
-            price = pd.read_csv(price_csv, header=1)
-    else:
-        price = pd.read_csv(price_csv)
-    if "Date" in price.columns:
-        price["report_date"] = pd.to_datetime(price["Date"])
-    elif "date" in price.columns:
-        price["report_date"] = pd.to_datetime(price["date"])
-    elif "week" in price.columns:
-        price["report_date"] = pd.to_datetime(price["week"])
-    else:
-
         raise KeyError("Price CSV must contain a date column")
+
+    # `_load_and_clean_price` normalizes column names to lowercase and removes
+    # any additional header rows.  Convert the date column to a timestamp and
+    # standardize the close column name.
     price["report_date"] = pd.to_datetime(price["date"])
 
     if "close" in price.columns:
         price = price.rename(columns={"close": "etf_close"})
     elif "Close" in price.columns:
+        # In case the cleaning step failed to normalize for some reason
         price = price.rename(columns={"Close": "etf_close"})
 
     price = price[["report_date", "etf_close"]]
