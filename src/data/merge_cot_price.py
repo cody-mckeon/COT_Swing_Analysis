@@ -92,7 +92,8 @@ def merge_cot_with_price(
         # In case the cleaning step failed to normalize for some reason
         price = price.rename(columns={"Close": "etf_close"})
 
-    price = price[["report_date", "etf_close"]]
+    cols = ["report_date", "open", "high", "low", "etf_close", "volume"]
+    price = price[[c for c in cols if c in price.columns]]
 
     merged = pd.merge(cot, price, on="report_date", how="inner")
     merged["week"] = merged["report_date"] + pd.offsets.Week(weekday=4)

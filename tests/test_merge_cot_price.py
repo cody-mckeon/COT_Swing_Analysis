@@ -15,7 +15,11 @@ def test_merge(tmp_path):
     })
     price = pd.DataFrame({
         'Date': pd.date_range('2024-01-01', periods=20, freq='D'),
-        'Close': range(20)
+        'Open': range(20),
+        'High': range(1,21),
+        'Low': range(20),
+        'Close': range(20),
+        'Volume': range(20)
     })
     cot_path = tmp_path / 'cot.csv'
     price_path = tmp_path / 'price.csv'
@@ -26,6 +30,8 @@ def test_merge(tmp_path):
     assert not merged.empty
     assert 'etf_close' in merged.columns
     assert 'week' in merged.columns
+    for col in ['open','high','low','volume']:
+        assert col in merged.columns
     assert out_path.exists()
 
 
@@ -43,7 +49,11 @@ def test_merge_two_level_header(tmp_path):
 
     price = pd.DataFrame({
         'Date': pd.date_range('2024-01-01', periods=20, freq='D'),
+        'Open': range(20),
+        'High': range(1,21),
+        'Low': range(20),
         'Close': range(20),
+        'Volume': range(20)
     })
 
     cot_path = tmp_path / 'cot.csv'
@@ -59,5 +69,7 @@ def test_merge_two_level_header(tmp_path):
     assert not merged.empty
     assert 'etf_close' in merged.columns
     assert 'week' in merged.columns
+    for col in ['open','high','low','volume']:
+        assert col in merged.columns
     assert out_path.exists()
 

@@ -1,16 +1,24 @@
 stages:
-  merge_cl:
-    cmd: python -m src.data.merge_cot_price --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv --price data/prices/cl_weekly.csv --out data/processed/merged_cl.csv --market "CRUDE OIL"
+  split_cot:
+    cmd: python -m src.data.split_cot --in-csv data/processed/cot_disagg_futures_gold_crude_2016_2025.csv --gold data/processed/cot_gold.csv --crude data/processed/cot_crude.csv
     deps:
       - data/processed/cot_disagg_futures_gold_crude_2016_2025.csv
+    outs:
+      - data/processed/cot_gold.csv
+      - data/processed/cot_crude.csv
+
+  merge_cl:
+    cmd: python -m src.data.merge_cot_price --cot data/processed/cot_crude.csv --price data/prices/cl_weekly.csv --out data/processed/merged_cl.csv --market "CRUDE OIL"
+    deps:
+      - data/processed/cot_crude.csv
       - data/prices/cl_weekly.csv
     outs:
       - data/processed/merged_cl.csv
 
   merge_gc:
-    cmd: python -m src.data.merge_cot_price --cot data/processed/cot_disagg_futures_gold_crude_2016_2025.csv --price data/prices/gc_weekly.csv --out data/processed/merged_gc.csv --market "GOLD"
+    cmd: python -m src.data.merge_cot_price --cot data/processed/cot_gold.csv --price data/prices/gc_weekly.csv --out data/processed/merged_gc.csv --market "GOLD"
     deps:
-      - data/processed/cot_disagg_futures_gold_crude_2016_2025.csv
+      - data/processed/cot_gold.csv
       - data/prices/gc_weekly.csv
     outs:
       - data/processed/merged_gc.csv
