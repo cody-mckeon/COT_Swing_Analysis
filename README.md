@@ -60,6 +60,17 @@ COT_Swing_Analysis/
    dvc repro -f
 
    ```
+   Running the steps manually does not modify `dvc.lock`. After your manual
+   execution, either:
+
+   1. Run `dvc commit` (or `dvc commit <stage>`/`dvc commit <output>`) to record
+      the new output hashes, or
+   2. Invoke `dvc repro` as shown in the README to have DVC refresh the stage
+      hashes for you.
+
+   This ensures DVC tracks the updated artifacts even when you execute the
+   underlying commands yourself.
+
 4. Reproduce the entire pipeline with DVC
    ```bash
    dvc repro -f
