@@ -2,6 +2,44 @@ import pandas as pd
 import logging
 import csv
 
+
+
+def _load_and_clean_price(price_csv: str) -> pd.DataFrame:
+    """Read a price CSV and ensure a single-row header with standard columns."""
+    # Peek at the first row to detect yfinance's "Ticker" prefix row
+    with open(price_csv, newline="") as fh:
+        reader = csv.reader(fh)
+        first = next(reader, [])
+
+    if first and first[0].strip().lower() == "ticker":
+        df = pd.read_csv(price_csv, header=1)
+    else:
+        df = pd.read_csv(price_csv)
+        if any(col.startswith("Unnamed") for col in df.columns):
+            try:
+                df = pd.read_csv(price_csv, header=[0, 1], index_col=0)
+                if isinstance(df.columns, pd.MultiIndex):
+                    df.columns = df.columns.get_level_values(-1)
+                    df.reset_index(inplace=True)
+            except Exception:
+                df = pd.read_csv(price_csv, header=1)
+
+    # Normalize column names
+    df.columns = [c.strip().lower() for c in df.columns]
+    if "adj close" in df.columns:
+        df = df.drop(columns=["adj close"])
+
+    if "date" not in df.columns:
+        if df.index.name and "date" in df.index.name.lower():
+            df = df.reset_index()
+        else:
+            df = df.rename(columns={df.columns[0]: "date"})
+
+    keep = ["date", "open", "high", "low", "close", "volume"]
+    df = df[[c for c in keep if c in df.columns]]
+    return df
+
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
@@ -34,6 +72,10 @@ def merge_cot_with_price(
     if market:
         cot = cot[cot["market_name"].str.contains(market, case=False, na=False)]
 
+
+    price = _load_and_clean_price(price_csv)
+    if "date" not in price.columns:
+
     # Detect if the price CSV has a two-line header starting with "Ticker".
     with open(price_csv, newline="") as fh:
         reader = csv.reader(fh)
@@ -60,12 +102,14 @@ def merge_cot_with_price(
     elif "week" in price.columns:
         price["report_date"] = pd.to_datetime(price["week"])
     else:
-        raise KeyError("Price CSV must contain a date column")
 
-    if "Close" in price.columns:
-        price = price.rename(columns={"Close": "etf_close"})
-    elif "close" in price.columns:
+        raise KeyError("Price CSV must contain a date column")
+    price["report_date"] = pd.to_datetime(price["date"])
+
+    if "close" in price.columns:
         price = price.rename(columns={"close": "etf_close"})
+    elif "Close" in price.columns:
+        price = price.rename(columns={"Close": "etf_close"})
 
     price = price[["report_date", "etf_close"]]
 
