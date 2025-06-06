@@ -81,7 +81,10 @@ def merge_cot_with_price(
     # `_load_and_clean_price` normalizes column names to lowercase and removes
     # any additional header rows.  Convert the date column to a timestamp and
     # standardize the close column name.
-    price["report_date"] = pd.to_datetime(price["date"])
+    price["report_date"] = pd.to_datetime(
+        price["date"], format="%Y-%m-%d", errors="coerce"
+    )
+    price = price.dropna(subset=["report_date"])
 
     if "close" in price.columns:
         price = price.rename(columns={"close": "etf_close"})
