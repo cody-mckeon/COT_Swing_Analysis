@@ -1,5 +1,6 @@
 import pandas as pd
 import logging
+import csv
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -33,7 +34,25 @@ def merge_cot_with_price(
     if market:
         cot = cot[cot["market_name"].str.contains(market, case=False, na=False)]
 
-    price = pd.read_csv(price_csv)
+    # Detect if the price CSV has a two-line header starting with "Ticker".
+    with open(price_csv, newline="") as fh:
+        reader = csv.reader(fh)
+        first_row = next(reader, [])
+        second_row = next(reader, [])
+
+    if first_row and first_row[0].strip().lower() == "ticker":
+        # Some price CSVs include a leading row like "Ticker,GC=F" followed by
+        # the actual column names on the next line. If the first two rows have
+        # the same length we can read them as a multi-index header and then
+        # drop the first level. Otherwise we skip the first row entirely.
+        if second_row and len(first_row) == len(second_row):
+            price = pd.read_csv(price_csv, header=[0, 1])
+            if isinstance(price.columns, pd.MultiIndex):
+                price.columns = price.columns.get_level_values(-1)
+        else:
+            price = pd.read_csv(price_csv, header=1)
+    else:
+        price = pd.read_csv(price_csv)
     if "Date" in price.columns:
         price["report_date"] = pd.to_datetime(price["Date"])
     elif "date" in price.columns:
