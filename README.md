@@ -66,5 +66,29 @@ COT_Swing_Analysis/
    ```
 5. Serve predictions
    ```bash
-   uvicorn src.api.app:app --reload
-   ```
+    uvicorn src.api.app:app --reload
+    ```
+
+## Core Feature Set
+
+The feature builder creates a small set of weekly signals used for modeling:
+
+- `mm_net_pct_oi`, `sd_net_pct_oi`, `pm_net_pct_oi` – each group’s net position
+  divided by open interest so bullish/bearish exposure is comparable week to
+  week.
+- `mm_net_pct_oi_chg_1w`, `sd_net_pct_oi_chg_1w`, `pm_net_pct_oi_chg_1w` –
+  one‑week changes in those ratios. Sharp swings in speculative positioning often
+  precede price rotations.
+- `return_1w` – next week’s percentage change in close. This serves as the
+  modeling target.
+- `vol_26w` – 26‑week rolling volatility of log returns to capture regime
+  shifts.
+- `rsi_14` – short‑term momentum oscillator.
+- `ema_13` – 13‑week exponential moving average of the close.
+- `macd_hist` – MACD line minus signal line, highlighting momentum
+  acceleration.
+
+These seven provide a compact mix of COT positioning and basic technical
+context. Once a simple cross‑validated model (e.g. logistic regression or a tiny
+random forest) is fit, you can inspect feature importances and iteratively prune
+or expand the set.
