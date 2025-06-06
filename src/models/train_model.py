@@ -1,9 +1,8 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression
 import joblib
 import logging
 
@@ -16,19 +15,36 @@ if not logger.handlers:
 
 def train(features_csv: str, model_out: str) -> float:
     df = pd.read_csv(features_csv)
-    X = df[["mm_net_pct_oi", "pm_net_pct_oi", "sd_net_pct_oi"]]
-    y = (df["return"] > 0).astype(int)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    feature_cols = [
+        "mm_net_pct_oi",
+        "pm_net_pct_oi",
+        "sd_net_pct_oi",
+        "mm_net_pct_oi_chg_1w",
+        "pm_net_pct_oi_chg_1w",
+        "sd_net_pct_oi_chg_1w",
+        "vol_26w",
+        "rsi_14",
+        "ema_13",
+        "macd_hist",
+    ]
+
+    X = df[feature_cols]
+    y = (df["return_1w"] > 0).astype(int)
+
     pipe = Pipeline([
         ("scaler", StandardScaler()),
-        ("clf", RandomForestClassifier(n_estimators=100, random_state=42))
+        ("clf", LogisticRegression(max_iter=1000))
     ])
-    pipe.fit(X_train, y_train)
-    preds = pipe.predict(X_test)
-    acc = accuracy_score(y_test, preds)
+
+    tscv = TimeSeriesSplit(n_splits=5)
+    scores = cross_val_score(pipe, X, y, cv=tscv, scoring="accuracy")
+
+    pipe.fit(X, y)
     joblib.dump(pipe, model_out)
-    logger.info(f"Saved model to {model_out} | accuracy={acc:.3f}")
-    return acc
+    logger.info(
+        f"Saved model to {model_out} | cv_accuracy={scores.mean():.3f}"
+    )
+    return scores.mean()
 
 if __name__ == "__main__":
     import argparse
