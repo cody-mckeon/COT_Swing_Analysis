@@ -41,12 +41,15 @@ COT_Swing_Analysis/
     python -m src.features.build_features \
        --merged data/processed/merged_gold.csv \
        --out data/processed/features_gc.csv
+    python -m src.data.build_classification_features \
+       --in data/processed/features_gc.csv \
+       --out data/processed/class_features_gc.csv
     python -m src.models.train_model \
        --features data/processed/features_gc.csv \
        --model models/model_gc.joblib
    # or run the classification pipeline and save the best estimator
     python -m src.models.train_classifier \
-        --features data/processed/features_gc.csv \
+        --features data/processed/class_features_gc.csv \
         --model-out models/best_model_gc.pkl
    # repeat for crude oil with the CL price file and market filter
     python -m src.data.merge_cot_price \
@@ -57,12 +60,15 @@ COT_Swing_Analysis/
     python -m src.features.build_features \
         --merged data/processed/merged_crude.csv \
         --out data/processed/features_cl.csv
+    python -m src.data.build_classification_features \
+        --in data/processed/features_cl.csv \
+        --out data/processed/class_features_cl.csv
     python -m src.models.train_model \
         --features data/processed/features_cl.csv \
         --model models/model_cl.joblib
    # classification pipeline for crude oil
     python -m src.models.train_classifier \
-        --features data/processed/features_cl.csv \
+        --features data/processed/class_features_cl.csv \
         --model-out models/best_model_cl.pkl
 
    dvc repro -f
