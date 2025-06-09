@@ -51,7 +51,14 @@ def run_backtest(
     model_path: str,
     test_start_date: str,
     commission_per_trade: float = 0.0005,
+    allow_shorts: bool = False,
 ) -> pd.DataFrame:
+    """Run a simple next-week backtest.
+
+    If ``allow_shorts`` is True, classifier predictions of ``0`` will be
+    interpreted as short signals (``-1``). Otherwise they are treated as no
+    position.
+    """
     train_df, test_df = _load_split(features_csv, test_start_date)
     model = joblib.load(model_path)
 
@@ -61,9 +68,14 @@ def run_backtest(
 
     X_test = _prep_X(test_df)
     signals = model.predict(X_test)
+    if allow_shorts:
+        # map classifier output 1 -> long, 0 -> short
+        positions = [1 if s == 1 else -1 for s in signals]
+    else:
+        positions = signals
 
     df_bt = test_df.copy()
-    df_bt["signal"] = signals
+    df_bt["signal"] = positions
     df_bt["entry_price"] = df_bt["etf_close"]
     df_bt["exit_price"] = df_bt["etf_close"].shift(-1)
     df_bt["raw_ret"] = (df_bt["exit_price"] - df_bt["entry_price"]) / df_bt["entry_price"]
@@ -111,6 +123,7 @@ def main(argv: Optional[list] = None) -> None:
     backtest_p.add_argument("model")
     backtest_p.add_argument("test_start")
     backtest_p.add_argument("--commission", type=float, default=0.0005)
+    backtest_p.add_argument("--allow-shorts", action="store_true", help="Enable short trades")
 
     args = parser.parse_args(argv)
 
@@ -122,6 +135,7 @@ def main(argv: Optional[list] = None) -> None:
             args.model,
             args.test_start,
             commission_per_trade=args.commission,
+            allow_shorts=args.allow_shorts,
         )
         Path("reports").mkdir(exist_ok=True)
         out_path = Path("reports/backtest_results.csv")

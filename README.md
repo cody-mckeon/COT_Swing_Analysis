@@ -130,7 +130,8 @@ python scripts/run_eval.py \
   --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/features_gc_clf.csv" \
   --model    "src/models/best_model_gc.pkl" \
   --test-start 2023-01-01 \
-  --commission 0.0005
+  --commission 0.0005 \
+  --allow-shorts
 ```
 
 - `--features`: the classification‑ready feature file for Gold (must include
@@ -138,6 +139,7 @@ python scripts/run_eval.py \
 - `--model`: the RandomForest you saved as `best_model_gc.pkl`.
 - `--test-start`: first date of the hold‑out period (e.g. `2023-01-01`).
 - `--commission`: round‑trip cost per trade (`0.0005` = `0.05%`).
+- `--allow-shorts`: enable taking short trades when the model predicts a down move.
 
 ### Crude Backtest
 
@@ -146,10 +148,11 @@ python scripts/run_eval.py \
   --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/features_clf.csv" \
   --model    "src/models/best_model_cl.pkl" \
   --test-start 2023-01-01 \
-  --commission 0.0005
+  --commission 0.0005 \
+ --allow-shorts
 ```
 
 Swap in your Crude feature file (`features_clf.csv`) and model
 (`best_model_cl.pkl`). The `--test-start` date can be earlier or later (e.g.
 `2022-07-01` to backtest the last 18 months). Commission stays at `0.0005`
-unless you want to model tighter or wider spreads.
+unless you want to model tighter or wider spreads. Include `--allow-shorts` if you wish to open short positions.
