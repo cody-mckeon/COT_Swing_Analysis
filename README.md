@@ -117,3 +117,39 @@ These seven provide a compact mix of COT positioning and basic technical
 context. Once a simple cross‑validated model (e.g. logistic regression or a tiny
 random forest) is fit, you can inspect feature importances and iteratively prune
 or expand the set.
+
+## Running the Backtest
+
+After training your classifiers, use `scripts/run_eval.py` to evaluate holdout
+performance and generate a simple trading backtest.
+
+### Gold Backtest
+
+```bash
+python scripts/run_eval.py \
+  --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/features_gc_clf.csv" \
+  --model    "src/models/best_model_gc.pkl" \
+  --test-start 2023-01-01 \
+  --commission 0.0005
+```
+
+- `--features`: the classification‑ready feature file for Gold (must include
+  `target_dir`).
+- `--model`: the RandomForest you saved as `best_model_gc.pkl`.
+- `--test-start`: first date of the hold‑out period (e.g. `2023-01-01`).
+- `--commission`: round‑trip cost per trade (`0.0005` = `0.05%`).
+
+### Crude Backtest
+
+```bash
+python scripts/run_eval.py \
+  --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/features_clf.csv" \
+  --model    "src/models/best_model_cl.pkl" \
+  --test-start 2023-01-01 \
+  --commission 0.0005
+```
+
+Swap in your Crude feature file (`features_clf.csv`) and model
+(`best_model_cl.pkl`). The `--test-start` date can be earlier or later (e.g.
+`2022-07-01` to backtest the last 18 months). Commission stays at `0.0005`
+unless you want to model tighter or wider spreads.
