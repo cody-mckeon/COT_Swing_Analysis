@@ -3,7 +3,8 @@ import pandas as pd
 import joblib
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.base import clone
@@ -14,14 +15,24 @@ from pathlib import Path
 def train_and_evaluate(features_csv: str, model_out: str) -> None:
     """Train classifiers using a features CSV produced by the classification builder."""
     df = pd.read_csv(features_csv)
-    if 'target_dir' not in df.columns:
+    if "target_dir" not in df.columns:
         raise ValueError("features CSV must contain 'target_dir' column")
 
-    feature_cols = [c for c in df.columns if c != 'target_dir']
-    if 'week' in feature_cols:
-        feature_cols.remove('week')
-    X = df[feature_cols]
-    y = df['target_dir']
+    y = df["target_dir"]
+    X_numeric = df.drop(
+        columns=[
+            "target_dir",
+            "market_name",
+            "contract_code",
+            "week",
+            "report_date",
+        ],
+        errors="ignore",
+    )
+
+    numeric_cols = X_numeric.select_dtypes(include="number").columns.tolist()
+    cat_cols = ["market_name"] if "market_name" in df.columns else []
+    X = pd.concat([X_numeric[numeric_cols], df[cat_cols]], axis=1)
 
     n_splits = 5 if len(X) > 6 else max(2, len(X) - 1)
     tscv = TimeSeriesSplit(n_splits=n_splits)
@@ -40,9 +51,20 @@ def train_and_evaluate(features_csv: str, model_out: str) -> None:
             X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
             y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
+            transformers = [('num', StandardScaler(), numeric_cols)]
+            if cat_cols:
+                transformers.append(
+                    (
+                        'cat',
+                        OneHotEncoder(handle_unknown='ignore'),
+                        cat_cols,
+                    )
+                )
+            preprocess = ColumnTransformer(transformers)
+
             pipe = Pipeline([
-                ('scaler', StandardScaler()),
-                ('clf', clone(clf))
+                ('preprocess', preprocess),
+                ('clf', clone(clf)),
             ])
 
             pipe.fit(X_train, y_train)
@@ -70,10 +92,23 @@ def train_and_evaluate(features_csv: str, model_out: str) -> None:
 
     # select best model by mean F1
     best_name, (best_f1, best_clf) = max(summary.items(), key=lambda x: x[1][0])
+
+    transformers = [('num', StandardScaler(), numeric_cols)]
+    if cat_cols:
+        transformers.append(
+            (
+                'cat',
+                OneHotEncoder(handle_unknown='ignore'),
+                cat_cols,
+            )
+        )
+    final_preprocess = ColumnTransformer(transformers)
+
     final_pipe = Pipeline([
-        ('scaler', StandardScaler()),
-        ('clf', best_clf)
+        ('preprocess', final_preprocess),
+        ('clf', best_clf),
     ])
+
     final_pipe.fit(X, y)
 
     Path(model_out).parent.mkdir(parents=True, exist_ok=True)
