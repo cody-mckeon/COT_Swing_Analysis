@@ -1,3 +1,11 @@
+import os, sys
+
+# ─── insert project root on sys.path ─────────────────────────────────────────
+# scripts is at <repo>/scripts/run_eval.py, so project root is one level up:
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, REPO_ROOT)
+# ───────────────────────────────────────────────────────────────────────────────
+
 import argparse
 from pathlib import Path
 from src.eval.backtest import holdout_validation, run_backtest
