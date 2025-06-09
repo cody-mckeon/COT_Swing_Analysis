@@ -18,7 +18,7 @@ def _load_split(features_csv: str, test_start_date: str):
 
 def _prep_X(df: pd.DataFrame) -> pd.DataFrame:
     return df.drop(
-        columns=["target_dir", "market_name", "contract_code", "week", "report_date"],
+        columns=["target_dir", "contract_code", "week", "report_date"],
         errors="ignore",
     )
 
