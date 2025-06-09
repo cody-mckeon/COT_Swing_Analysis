@@ -1,0 +1,40 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run CLI pipeline
+      run: |
+        python -m src.data.split_cot --in-csv data/processed/cot_disagg_futures_gold_crude_2016_2025.csv --gold data/processed/cot_gold.csv --crude data/processed/cot_crude.csv
+        python -m src.data.merge_cot_price --cot data/processed/cot_crude.csv --price data/prices/cl_weekly.csv --out data/processed/merged_cl.csv --market "CRUDE OIL"
+        python -m src.features.build_features --merged data/processed/merged_cl.csv --out data/processed/features_cl.csv
+        python -m src.data.build_classification_features --in data/processed/features_cl.csv --out data/processed/class_features_cl.csv --th 0
+        python -m src.models.train_classifier --features data/processed/class_features_cl.csv --model-out models/best_model_cl.pkl
+        python -m src.data.merge_cot_price --cot data/processed/cot_gold.csv --price data/prices/gc_weekly.csv --out data/processed/merged_gc.csv --market "GOLD"
+        python -m src.features.build_features --merged data/processed/merged_gc.csv --out data/processed/features_gc.csv
+        python -m src.data.build_classification_features --in data/processed/features_gc.csv --out data/processed/class_features_gc.csv --th 0
+        python -m src.models.train_classifier --features data/processed/class_features_gc.csv --model-out models/best_model_gc.pkl
+
+    - name: Run DVC pipeline
+      run: |
+        dvc repro -f
+
+    - name: Run tests
+      run: |
+        pytest

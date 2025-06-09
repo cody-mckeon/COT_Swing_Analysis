@@ -12,6 +12,7 @@ from pathlib import Path
 
 
 def train_and_evaluate(features_csv: str, model_out: str) -> None:
+    """Train classifiers using a features CSV produced by the classification builder."""
     df = pd.read_csv(features_csv)
     if 'target_dir' not in df.columns:
         raise ValueError("features CSV must contain 'target_dir' column")
@@ -83,8 +84,10 @@ def train_and_evaluate(features_csv: str, model_out: str) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="Train classifiers on feature set")
-    parser.add_argument('--features', required=True, help='Path to features CSV')
-    parser.add_argument('--model-out', default='models/best_model.pkl', help='Path to save the best model pickle')
+    parser.add_argument('--features', default='data/processed/class_features.csv',
+                        help='Path to classification features CSV')
+    parser.add_argument('--model-out', default='models/best_model.pkl',
+                        help='Path to save the best model pickle')
     args = parser.parse_args()
     train_and_evaluate(args.features, args.model_out)
 

@@ -1,6 +1,7 @@
 import pandas as pd
 import subprocess
 from src.features.build_features import build_features
+from src.data.build_classification_features import build_classification_features
 
 
 def test_train_classifier(tmp_path):
@@ -21,13 +22,13 @@ def test_train_classifier(tmp_path):
 
     features_path = tmp_path / 'features.csv'
     df = build_features(str(merged_path), str(features_path))
-    df['target_dir'] = (df['return_1w'] > 0).astype(int)
-    df.to_csv(features_path, index=False)
+    class_path = tmp_path / 'class.csv'
+    df = build_classification_features(str(features_path), str(class_path), th=0.0)
 
     model_path = tmp_path / 'best_model.pkl'
     result = subprocess.run([
         'python', '-m', 'src.models.train_classifier',
-        '--features', str(features_path),
+        '--features', str(class_path),
         '--model-out', str(model_path)
     ], capture_output=True, text=True)
 
