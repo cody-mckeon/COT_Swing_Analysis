@@ -1,5 +1,14 @@
 pandas>=1.5.0
 nasdaq-data-link>=1.0.0
+
+numpy>=1.20
+scikit-learn>=1.0
+joblib>=1.0
+fastapi>=0.70
+uvicorn>=0.18
+yfinance>=0.2
+dvc>=3.0
+
 numpy
 scikit-learn
 joblib
@@ -7,3 +16,4 @@ fastapi
 uvicorn
 yfinance
 dvc
+
