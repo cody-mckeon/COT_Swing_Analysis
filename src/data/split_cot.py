@@ -14,8 +14,10 @@ if not logger.handlers:
 def split_cot(in_csv: str, gold_csv: str, crude_csv: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split combined COT CSV into separate gold and crude files."""
     df = pd.read_csv(in_csv, parse_dates=["report_date"], low_memory=False)
-    gold = df[df["market_name"].str.contains("GOLD", case=False, na=False)].copy()
-    crude = df[df["market_name"].str.contains("CRUDE", case=False, na=False)].copy()
+    df["contract_code"] = df["contract_code"].astype(str)
+    # Use contract_code which stays constant even when market_name values change
+    gold = df[df["contract_code"] == "088691"].copy()
+    crude = df[df["contract_code"] == "067651"].copy()
 
     for out_path, subset in ((gold_csv, gold), (crude_csv, crude)):
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
