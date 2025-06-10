@@ -43,13 +43,13 @@ COT_Swing_Analysis/
        --out data/processed/features_gc.csv
     python -m src.data.build_classification_features \
        --in data/processed/features_gc.csv \
-       --out data/processed/class_features_gc.csv
+       --out data/processed/class_features_gc_extreme.csv
     python -m src.models.train_model \
        --features data/processed/features_gc.csv \
        --model models/model_gc.joblib
    # or run the classification pipeline and save the best estimator
     python -m src.models.train_classifier \
-        --features data/processed/class_features_gc.csv \
+        --features data/processed/class_features_gc_extreme.csv \
         --model-out models/best_model_gc.pkl
    # repeat for crude oil with the CL price file and market filter
     python -m src.data.merge_cot_price \
@@ -62,13 +62,13 @@ COT_Swing_Analysis/
         --out data/processed/features_cl.csv
     python -m src.data.build_classification_features \
         --in data/processed/features_cl.csv \
-        --out data/processed/class_features_cl.csv
+        --out data/processed/class_features_cl_extreme.csv
     python -m src.models.train_model \
         --features data/processed/features_cl.csv \
         --model models/model_cl.joblib
    # classification pipeline for crude oil
     python -m src.models.train_classifier \
-        --features data/processed/class_features_cl.csv \
+        --features data/processed/class_features_cl_extreme.csv \
         --model-out models/best_model_cl.pkl
 
    dvc repro -f
@@ -127,7 +127,7 @@ performance and generate a simple trading backtest.
 
 ```bash
 python scripts/run_eval.py \
-  --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/features_gc_clf.csv" \
+  --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/class_features_gc_extreme.csv" \
   --model    "src/models/best_model_gc.pkl" \
   --test-start 2023-01-01 \
   --commission 0.0005 \
@@ -145,14 +145,14 @@ python scripts/run_eval.py \
 
 ```bash
 python scripts/run_eval.py \
-  --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/features_clf.csv" \
+  --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/class_features_cl_extreme.csv" \
   --model    "src/models/best_model_cl.pkl" \
   --test-start 2023-01-01 \
   --commission 0.0005 \
  --allow-shorts
 ```
 
-Swap in your Crude feature file (`features_clf.csv`) and model
+Swap in your Crude feature file (`class_features_cl_extreme.csv`) and model
 (`best_model_cl.pkl`). The `--test-start` date can be earlier or later (e.g.
 `2022-07-01` to backtest the last 18 months). Commission stays at `0.0005`
 unless you want to model tighter or wider spreads. Include `--allow-shorts` if you wish to open short positions.
@@ -164,7 +164,7 @@ multiple start dates and summarizes returns, Sharpe ratios and drawdowns.
 
 ```bash
 python scripts/rolling_eval.py \
-  --features data/processed/features_gc_clf.csv \
+  --features data/processed/class_features_gc_extreme.csv \
   --model    src/models/best_model_gc.pkl \
   --start    2017-01-01 \
   --end      2024-01-01 \
@@ -174,8 +174,13 @@ python scripts/rolling_eval.py \
 
 Results are written to `reports/rolling_backtest_gc.csv`.
 
+## Contrarian Overlay
+
+When money managers' net-OI exceeds the 90th percentile, we invert the model's LONG
+signal to SHORT, to fade the speculator crowd.
+
+
 ### NOTES
-Contrarian overlay: in extreme speculator‐long conditions you might explicitly take the opposite side.
 
 Add a regime flag (e.g. vol_26w > threshold) and train separate models for high- vs low-vol regimes.
 

@@ -4,16 +4,21 @@ import argparse
 
 
 def build_classification_features(in_csv: str, out_csv: str, th: float = 0.0) -> pd.DataFrame:
-    """Add binary classification target column to a features CSV."""
+    """Add binary classification target and extreme speculator flag."""
     df = pd.read_csv(in_csv)
-    if 'return_1w' in df.columns:
-        ret_col = 'return_1w'
-    elif 'return' in df.columns:
-        ret_col = 'return'
+    if "return_1w" in df.columns:
+        ret_col = "return_1w"
+    elif "return" in df.columns:
+        ret_col = "return"
     else:
         raise ValueError("Input CSV must contain 'return_1w' or 'return' column")
 
-    df['target_dir'] = (df[ret_col] > th).astype(int)
+    # flag weeks when money managers are extremely long
+    if "mm_net_pct_oi" in df.columns:
+        p90 = df["mm_net_pct_oi"].quantile(0.90)
+        df["extreme_spec_long"] = (df["mm_net_pct_oi"] >= p90).astype(int)
+
+    df["target_dir"] = (df[ret_col] > th).astype(int)
     Path(out_csv).parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_csv, index=False)
     return df
@@ -22,7 +27,12 @@ def build_classification_features(in_csv: str, out_csv: str, th: float = 0.0) ->
 def main() -> None:
     parser = argparse.ArgumentParser(description="Create classification targets")
     parser.add_argument('--in', dest='in_csv', required=True, help='Input features CSV')
-    parser.add_argument('--out', dest='out_csv', default='data/processed/class_features.csv', help='Output CSV with target')
+    parser.add_argument(
+        '--out',
+        dest='out_csv',
+        default='data/processed/class_features_extreme.csv',
+        help='Output CSV with target and extreme flag'
+    )
     parser.add_argument('--th', type=float, default=0.0, help='Return threshold')
     args = parser.parse_args()
     build_classification_features(args.in_csv, args.out_csv, args.th)
