@@ -76,6 +76,10 @@ def run_backtest(
 
     df_bt = test_df.copy()
     df_bt["signal"] = positions
+    # contrarian overlay: invert signal on extreme speculator-long weeks
+    if "extreme_spec_long" in df_bt.columns:
+        mask = df_bt["extreme_spec_long"] == 1
+        df_bt.loc[mask, "signal"] = -df_bt.loc[mask, "signal"]
     df_bt["entry_price"] = df_bt["etf_close"]
     df_bt["exit_price"] = df_bt["etf_close"].shift(-1)
     df_bt["raw_ret"] = (df_bt["exit_price"] - df_bt["entry_price"]) / df_bt["entry_price"]
