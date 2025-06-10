@@ -173,3 +173,22 @@ python scripts/rolling_eval.py \
 ```
 
 Results are written to `reports/rolling_backtest_gc.csv`.
+
+### NOTES
+Contrarian overlay: in extreme speculator‐long conditions you might explicitly take the opposite side.
+
+Add a regime flag (e.g. vol_26w > threshold) and train separate models for high- vs low-vol regimes.
+
+Adjust rolling frequency
+
+Try 3-month windows instead of 6-month to see more granular shifts.
+
+Or longer (annual) windows to smooth out noise.
+
+Add risk filters
+
+In the low-CAGR 2023 regime, perhaps filter out weeks when VIX > X or range_pct_w < Y.
+
+Ensemble old & new
+
+Combine predictions from models trained on different eras (2017–2020 vs 2020–2023) weighted by recent performance.
