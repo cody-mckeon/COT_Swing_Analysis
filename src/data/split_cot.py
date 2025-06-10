@@ -14,9 +14,14 @@ if not logger.handlers:
 def split_cot(in_csv: str, gold_csv: str, crude_csv: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split combined COT CSV into separate gold and crude files."""
     df = pd.read_csv(in_csv, parse_dates=["report_date"], low_memory=False)
+
     # Normalize as zero-padded strings so we can compare to literal codes.
     # We prefer contract_code over market_name because the latter can change.
     df["contract_code"] = df["contract_code"].astype(str).str.zfill(6)
+
+    df["contract_code"] = df["contract_code"].astype(str)
+    # Use contract_code which stays constant even when market_name values change
+
     gold = df[df["contract_code"] == "088691"].copy()
     crude = df[df["contract_code"] == "067651"].copy()
 
