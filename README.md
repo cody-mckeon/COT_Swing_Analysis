@@ -156,3 +156,20 @@ Swap in your Crude feature file (`features_clf.csv`) and model
 (`best_model_cl.pkl`). The `--test-start` date can be earlier or later (e.g.
 `2022-07-01` to backtest the last 18 months). Commission stays at `0.0005`
 unless you want to model tighter or wider spreads. Include `--allow-shorts` if you wish to open short positions.
+
+### Rolling Window Backtests
+
+To gauge robustness over time, run the rolling evaluation script. It retrains at
+multiple start dates and summarizes returns, Sharpe ratios and drawdowns.
+
+```bash
+python scripts/rolling_eval.py \
+  --features data/processed/features_gc_clf.csv \
+  --model    src/models/best_model_gc.pkl \
+  --start    2017-01-01 \
+  --end      2024-01-01 \
+  --freq     6M \
+  --commission 0.0005
+```
+
+Results are written to `reports/rolling_backtest_gc.csv`.
