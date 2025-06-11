@@ -274,4 +274,30 @@ The script will authenticate with Google Drive using the service account, downlo
 
 Feature Engineering Orchestrator
 
+
+Setting up Docker
+Although the repository does not include a Dockerfile yet (the script notes this with # TODO: add a Dockerfile to containerize this script.), the steps would be:
+
+Create a Dockerfile based on python:3.11 (matching the CI workflow).
+
+Copy requirements.txt and install the dependencies.
+
+Copy the repository files.
+
+Set the environment variables (GDRIVE_SA_KEY, RAW_DATA_FOLDER_ID, RAW_DATA_DIR) at runtime (e.g., docker run -e GDRIVE_SA_KEY=...).
+
+Run python scripts/weekly_etl.py as the container’s entrypoint.
+
+Once built, this Docker image can be used in CI (GitHub Actions supports running Docker containers) or deployed to other environments.
+
+In short:
+
+Define the required env vars: GDRIVE_SA_KEY, RAW_DATA_FOLDER_ID, and optionally RAW_DATA_DIR.
+
+Store the service‑account key and folder ID in GitHub secrets or pass them when running a Docker container.
+
+Extend your GitHub workflow with a step that runs scripts/weekly_etl.py using those variables.
+
+Optionally add a Dockerfile that installs the requirements and runs the script. This would allow executing the same pro
+
 Chain the two above so that once price + COT are updated, you re‐run your build_classification_features.py (with the 95% threshold) to produce today’s feature row.
