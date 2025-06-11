@@ -197,3 +197,19 @@ In the low-CAGR 2023 regime, perhaps filter out weeks when VIX > X or range_pct_
 Ensemble old & new
 
 Combine predictions from models trained on different eras (2017–2020 vs 2020–2023) weighted by recent performance.
+
+Threshold Sensitivity
+
+Try the 85th or 95th percentile instead of 90th and re-plot the rolling CAGR to see if you can eke out a bit more performance or smoother equity (fewer false-positives).
+
+Apply to Crude
+
+Repeat the exact same overlay logic on your crude dataset so you can compare Gold vs. Crude robustness under the same contrarian rule.
+
+Combine with Vol Filter
+
+Add a flag for vol_26w > X (say X = its 75th percentile) and only apply the contrarian flip when volatility is “normal” (to avoid fading during flash crashes).
+
+Drawdown Analysis
+
+Compute max drawdown in each rolling window and check if the overlay also reduced drawdowns in 2023 (it should).
