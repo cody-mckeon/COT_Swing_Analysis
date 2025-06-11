@@ -12,7 +12,8 @@ def test_rolling_eval(tmp_path):
         'week': pd.date_range('2024-01-02', periods=periods, freq='W-TUE'),
         'feature1': range(periods),
         'target_dir': [0, 1] * (periods // 2) + ([0] if periods % 2 else []),
-        'etf_close': 100 + pd.Series(range(periods))
+        'etf_close': 100 + pd.Series(range(periods)),
+        'mm_net_pct_oi': [i / periods for i in range(periods)]
     })
     features_path = tmp_path / 'features.csv'
     df.to_csv(features_path, index=False)
@@ -35,10 +36,11 @@ def test_rolling_eval(tmp_path):
         '--start', str(df.week.iloc[0].date()),
         '--end', str(df.week.iloc[-2].date()),
         '--freq', '2W',
-        '--commission', '0.0'
+        '--commission', '0.0',
+        '--thresholds', '0.9'
     ], capture_output=True, text=True)
 
-    out_path = Path('reports/rolling_backtest_gc.csv')
+    out_path = Path('reports/rolling_thresholds_gc.csv')
     assert out_path.exists(), result.stderr
     out_df = pd.read_csv(out_path)
     assert not out_df.empty

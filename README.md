@@ -169,10 +169,11 @@ python scripts/rolling_eval.py \
   --start    2017-01-01 \
   --end      2024-01-01 \
   --freq     6M \
-  --commission 0.0005
+  --commission 0.0005 \
+  --thresholds 0.85,0.90,0.95
 ```
 
-Results are written to `reports/rolling_backtest_gc.csv`.
+Results are written to `reports/rolling_thresholds_gc.csv`.
 
 ## Contrarian Overlay
 
