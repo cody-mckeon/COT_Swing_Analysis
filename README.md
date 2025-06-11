@@ -274,7 +274,6 @@ The script will authenticate with Google Drive using the service account, downlo
 
 Feature Engineering Orchestrator
 
-
 Setting up Docker
 Although the repository does not include a Dockerfile yet (the script notes this with # TODO: add a Dockerfile to containerize this script.), the steps would be:
 
