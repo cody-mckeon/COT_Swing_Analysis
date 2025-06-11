@@ -228,6 +228,50 @@ Likewise schedule a daily job to:
 • Fetch yesterday’s close for GC (or GLD) and CL (or USO) via yfinance or a broker API
 • Append to prices/*.csv
 
+scripts/weekly_etl.py is meant for either a Colab or CI/Docker environment and requires several environment variables. At the top of the script it states:
+
+# This script is intended to run in GitHub Actions or a Docker container.
+# Ensure `GDRIVE_SA_KEY`, `RAW_DATA_FOLDER_ID` and `RAW_DATA_DIR` are set.
+
+The script detects the COLAB_ENV variable to decide whether to mount Google Drive:
+
+IS_COLAB = os.getenv("COLAB_ENV") == "1"
+if IS_COLAB:
+    RAW_DIR = Path("/content/drive/MyDrive/COT_Swing_Analysis/src/data/raw")
+else:
+    RAW_DIR = Path(os.getenv("RAW_DATA_DIR", "src/data/raw"))
+
+Its main entry point expects the folder ID and credentials:
+
+def main() -> None:
+    folder_id = os.getenv("RAW_DATA_FOLDER_ID")
+    if not folder_id:
+        logging.error({"error": "RAW_DATA_FOLDER_ID not set"})
+        sys.exit(1)
+
+    service = build_drive_service()
+    exit_code = download_folder(service, folder_id, RAW_DIR)
+    sys.exit(exit_code)
+
+To run it:
+
+Install dependencies from requirements.txt (pip install -r requirements.txt).
+
+Export the following environment variables:
+
+GDRIVE_SA_KEY – the service‑account JSON contents.
+
+RAW_DATA_FOLDER_ID – the Google Drive folder ID containing your raw files.
+
+RAW_DATA_DIR – local destination directory (defaults to src/data/raw).
+
+Optional COLAB_ENV=1 when running in Colab; otherwise omit.
+
+Execute the script:
+
+python scripts/weekly_etl.py
+The script will authenticate with Google Drive using the service account, download all files from the specified folder, and place them in RAW_DATA_DIR. It logs progress and exits with a non‑zero code if a problem occurs.
+
 Feature Engineering Orchestrator
 
 Chain the two above so that once price + COT are updated, you re‐run your build_classification_features.py (with the 95% threshold) to produce today’s feature row.
