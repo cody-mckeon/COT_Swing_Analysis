@@ -214,3 +214,20 @@ Add a flag for vol_26w > X (say X = its 75th percentile) and only apply the cont
 Drawdown Analysis
 
 Compute max drawdown in each rolling window and check if the overlay also reduced drawdowns in 2023 (it should).
+
+Productionize Your Data Pipeline
+Weekly COT Ingestion
+
+Schedule a job (cron / GitHub Action / Cloud Scheduler) each Friday after 5 pm ET to:
+• Pull new COT tables via Nasdaq Data Link or direct download
+• Run make_dataset.py → update cot_disagg_futures…csv in your DVC-tracked data store
+
+Daily Price Update
+
+Likewise schedule a daily job to:
+• Fetch yesterday’s close for GC (or GLD) and CL (or USO) via yfinance or a broker API
+• Append to prices/*.csv
+
+Feature Engineering Orchestrator
+
+Chain the two above so that once price + COT are updated, you re‐run your build_classification_features.py (with the 95% threshold) to produce today’s feature row.
