@@ -41,8 +41,6 @@ def test_weekly_etl(tmp_path, monkeypatch):
             return DummyResp(hist_zip.getvalue())
         return DummyResp(year_zip.getvalue())
 
-        return DummyResp(buf.getvalue())
-
     monkeypatch.setattr("requests.get", dummy_get)
 
     calls = []
@@ -65,8 +63,6 @@ def test_weekly_etl(tmp_path, monkeypatch):
         @classmethod
         def now(cls):
             class D:  # noqa: D401
-
-                year = 2017
 
                 year = 2008
 
