@@ -1,0 +1,34 @@
+name: Weekly ETL
+
+on:
+  schedule:
+    - cron: "30 20 * * FRI"  # 3:30pm ET
+
+jobs:
+  etl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install --no-cache-dir -r requirements.txt google-api-python-client google-auth
+
+      - name: Run ETL
+        env:
+          GDRIVE_SA_KEY: ${{ secrets.GDRIVE_SA_KEY }}
+          RAW_DATA_FOLDER_ID: ${{ secrets.RAW_DATA_FOLDER_ID }}
+          RAW_DATA_DIR: src/data/raw
+        run: python scripts/weekly_etl.py
+
+      - name: Commit processed data
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add src/data/raw/*.xls src/data/processed/*.csv
+          git commit -m "ci: weekly ETL update" || echo "No changes"
+          git push origin main
