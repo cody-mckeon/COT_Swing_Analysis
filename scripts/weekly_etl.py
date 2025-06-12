@@ -1,84 +1,79 @@
-# This script is intended to run in GitHub Actions or a Docker container.
-# Ensure `GDRIVE_SA_KEY`, `RAW_DATA_FOLDER_ID` and `RAW_DATA_DIR` are set.
-# TODO: add a Dockerfile to containerize this script.
-
 import os
 import sys
-import json
 import io
-import logging
+import json
+import zipfile
+import requests
+import subprocess
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from googleapiclient.http import MediaIoBaseDownload
-
-IS_COLAB = os.getenv("COLAB_ENV") == "1"
-if IS_COLAB:
-    RAW_DIR = Path("/content/drive/MyDrive/COT_Swing_Analysis/src/data/raw")
-else:
-    RAW_DIR = Path(os.getenv("RAW_DATA_DIR", "src/data/raw"))
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
-def build_drive_service():
-    key_json = os.getenv("GDRIVE_SA_KEY")
-    if not key_json:
-        logging.error({"error": "GDRIVE_SA_KEY not set"})
-        sys.exit(1)
+def download_year(year: int, dest: Path) -> None:
+    """Download and extract a single year's COT Excel file."""
+    url = f"https://www.cftc.gov/files/dea/history/futonly_xls_{year}.zip"
+    resp = requests.get(url)
+    resp.raise_for_status()
+    with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
+        for name in zf.namelist():
+            if name.lower().endswith(".xls"):
+                out = dest / f"cot_{year}.xls"
+                with zf.open(name) as src, open(out, "wb") as dst:
+                    dst.write(src.read())
+                return
+    raise RuntimeError(f"No .xls found in {url}")
 
-    info = json.loads(key_json)
-    creds = service_account.Credentials.from_service_account_info(
-        info, scopes=["https://www.googleapis.com/auth/drive.readonly"]
-    )
-    return build("drive", "v3", credentials=creds)
 
+def main() -> int:
+    creds_info = json.loads(os.environ["GDRIVE_SA_KEY"])
+    creds = service_account.Credentials.from_service_account_info(creds_info)
+    drive = build("drive", "v3", credentials=creds)  # noqa: F841 unused but kept
 
-def download_folder(service, folder_id: str, dest_dir: Path) -> int:
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    query = f"'{folder_id}' in parents and mimeType!='application/vnd.google-apps.folder'"
+    raw_dir = Path(os.getenv("RAW_DATA_DIR", "src/data/raw"))
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    os.environ.setdefault("RAW_DATA_FOLDER_ID", "")  # ensure var exists
+
+    for year in range(2008, datetime.now().year + 1):
+        target = raw_dir / f"cot_{year}.xls"
+        if not target.exists():
+            download_year(year, raw_dir)
+
     try:
-        files = service.files().list(q=query, fields="files(id, name)").execute().get("files", [])
-    except HttpError as e:
-        logging.error({"error": str(e)})
-        return 1
-
-    for f in files:
-        dest_file = dest_dir / f["name"]
-        request = service.files().get_media(fileId=f["id"])
-        fh: Optional[io.FileIO] = None
-        try:
-            fh = io.FileIO(dest_file, "wb")
-            downloader = MediaIoBaseDownload(fh, request)
-            done = False
-            while not done:
-                status, done = downloader.next_chunk()
-            logging.info({"downloaded": dest_file.as_posix()})
-        except HttpError as e:
-            logging.error({"file": f["name"], "error": str(e)})
-            return 1
-        finally:
-            if fh:
-                fh.close()
+        subprocess.check_call([
+            sys.executable, "src/data/make_dataset.py",
+            "--raw-dir", str(raw_dir),
+            "--out-csv", "src/data/processed/cot_disagg_futures_2016_2025.csv",
+        ])
+        subprocess.check_call([
+            sys.executable, "-m", "src.data.split_cot",
+            "--in-csv", "src/data/processed/cot_disagg_futures_2016_2025.csv",
+            "--gold", "src/data/processed/cot_gold.csv",
+            "--crude", "src/data/processed/cot_crude.csv",
+        ])
+        subprocess.check_call([
+            sys.executable, "-m", "src.data.load_price",
+            "--tickers", "GC=F,CL=F",
+            "--max-retries", "5",
+            "--retry-delay", "10",
+        ])
+        subprocess.check_call([
+            sys.executable, "-m", "src.data.build_classification_features",
+            "--in", "src/data/processed/class_features_gc.csv",
+            "--out", "src/data/processed/class_features_gc_extreme.csv",
+            "--th", "0.95",
+        ])
+        subprocess.check_call([
+            sys.executable, "-m", "src.data.build_classification_features",
+            "--in", "src/data/processed/class_features_cl.csv",
+            "--out", "src/data/processed/class_features_cl_extreme.csv",
+            "--th", "0.95",
+        ])
+    except subprocess.CalledProcessError as exc:
+        return exc.returncode
     return 0
 
 
-def main() -> None:
-    folder_id = os.getenv("RAW_DATA_FOLDER_ID")
-    if not folder_id:
-        logging.error({"error": "RAW_DATA_FOLDER_ID not set"})
-        sys.exit(1)
-
-    service = build_drive_service()
-    exit_code = download_folder(service, folder_id, RAW_DIR)
-    sys.exit(exit_code)
-
-
 if __name__ == "__main__":
-    if IS_COLAB:
-        from google.colab import drive
-        drive.mount("/content/drive")
-    main()
+    sys.exit(main())

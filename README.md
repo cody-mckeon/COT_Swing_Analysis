@@ -300,3 +300,21 @@ Extend your GitHub workflow with a step that runs scripts/weekly_etl.py using th
 Optionally add a Dockerfile that installs the requirements and runs the script. This would allow executing the same pro
 
 Chain the two above so that once price + COT are updated, you re‐run your build_classification_features.py (with the 95% threshold) to produce today’s feature row.
+
+## Automated Weekly ETL
+
+The repository ships with a GitHub Actions workflow that runs every Friday at 3:30pm ET. It fetches any missing COT Excel files, updates prices and builds the latest feature sets automatically.
+
+### Prerequisites
+- `GDRIVE_SA_KEY` – Google service account JSON stored as a secret.
+- `RAW_DATA_FOLDER_ID` – Drive folder ID containing the raw COT files.
+
+Set `RAW_DATA_DIR` to override the local download directory when running the script manually.
+
+You can trigger the ETL outside of the schedule via the **workflow_dispatch** button on GitHub or by running:
+
+```bash
+python scripts/weekly_etl.py
+```
+
+with the same environment variables defined.
