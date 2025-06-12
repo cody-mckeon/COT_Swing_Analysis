@@ -8,11 +8,24 @@ import pytest
 
 
 def test_weekly_etl(tmp_path, monkeypatch):
+
+    # create dummy zip files: historical 2006-2016 and individual 2017
+    hist_zip = io.BytesIO()
+    with zipfile.ZipFile(hist_zip, "w") as zf:
+        zf.writestr("fut_disagg_2016.xls", b"hist")
+    hist_zip.seek(0)
+
+    year_zip = io.BytesIO()
+    with zipfile.ZipFile(year_zip, "w") as zf:
+        zf.writestr("fut_disagg_2017.xls", b"year")
+    year_zip.seek(0)
+
     # create a dummy zip containing one Excel file
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         zf.writestr("test.xls", b"dummy")
     buf.seek(0)
+
 
     class DummyResp:
         def __init__(self, data):
@@ -22,6 +35,11 @@ def test_weekly_etl(tmp_path, monkeypatch):
             pass
 
     def dummy_get(url):
+
+        if "hist_2006_2016" in url:
+            return DummyResp(hist_zip.getvalue())
+        return DummyResp(year_zip.getvalue())
+
         return DummyResp(buf.getvalue())
 
     monkeypatch.setattr("requests.get", dummy_get)
@@ -46,7 +64,11 @@ def test_weekly_etl(tmp_path, monkeypatch):
         @classmethod
         def now(cls):
             class D:  # noqa: D401
+
+                year = 2017
+
                 year = 2008
+
             return D()
 
     monkeypatch.setattr(etl, "datetime", FakeDatetime)
@@ -63,5 +85,10 @@ def test_weekly_etl(tmp_path, monkeypatch):
     exit_code = etl.main()
     assert exit_code == 0
 
+
+    assert (tmp_path / "cot_2016.xls").exists()
+    assert (tmp_path / "cot_2017.xls").exists()
+
     assert (tmp_path / "cot_2008.xls").exists()
+
     assert any("make_dataset.py" in str(c[1]) if isinstance(c, list) else False for c in calls)
