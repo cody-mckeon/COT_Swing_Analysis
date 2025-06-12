@@ -13,6 +13,7 @@ def test_weekly_etl(tmp_path, monkeypatch):
     hist_zip = io.BytesIO()
     with zipfile.ZipFile(hist_zip, "w") as zf:
         zf.writestr("fut_disagg_2016.xls", b"hist")
+        zf.writestr("fut_disagg_2008.xls", b"hist")
     hist_zip.seek(0)
 
     year_zip = io.BytesIO()

@@ -234,10 +234,11 @@ authenticate, though the script now fetches the COT Excel files directly from th
 CFTC website.  Set `RAW_DATA_DIR` if you want the files stored somewhere other
 than `src/data/raw`.
 
-When executed it first ensures that `cot_YYYY.xls` files exist for every year
-from 2008 through the current year, downloading any missing ones.  Once the
-files are in place the script runs the dataset building steps (`make_dataset.py`,
-`split_cot`, `load_price` and `build_classification_features`).
+When executed it first makes sure the 2006–2016 historical archive is present
+and that yearly `cot_YYYY.xls` files for 2017–2025 exist, downloading any
+missing ones.  Once the files are in place the script runs the dataset building
+steps (`make_dataset.py`, `split_cot`, `load_price` and
+`build_classification_features`).
 
 To run it manually install the requirements and export at least
 `GDRIVE_SA_KEY`:
