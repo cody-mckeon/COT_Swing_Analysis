@@ -60,6 +60,11 @@ def main() -> int:
     raw_dir.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("RAW_DATA_FOLDER_ID", "")
 
+    out_csv = os.getenv(
+        "OUT_CSV_PATH",
+        "src/data/processed/cot_disagg_futures_2006_2025.csv",
+    )
+
     end_year = 2025
     years = range(2017, end_year + 1)
 
@@ -81,14 +86,14 @@ def main() -> int:
             "--raw-dir",
             str(raw_dir),
             "--out-csv",
-            "src/data/processed/cot_disagg_futures_2016_2025.csv",
+            out_csv,
         ])
         subprocess.check_call([
             sys.executable,
             "-m",
             "src.data.split_cot",
             "--in-csv",
-            "src/data/processed/cot_disagg_futures_2016_2025.csv",
+            out_csv,
             "--gold",
             "src/data/processed/cot_gold.csv",
             "--crude",

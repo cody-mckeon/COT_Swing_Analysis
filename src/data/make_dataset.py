@@ -195,7 +195,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--out-csv",
         type=str,
-        default="data/processed/cot_disagg_futures_2016_2025.csv",
+        default="data/processed/cot_disagg_futures_2006_2025.csv",
         help="Path where the consolidated CSV will be written",
     )
     args = parser.parse_args()

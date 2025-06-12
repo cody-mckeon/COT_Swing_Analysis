@@ -24,8 +24,8 @@ COT_Swing_Analysis/
    ```
 2. Build the dataset, split by market and fetch micro-futures prices:
    ```bash
-   python data/make_dataset.py --raw-dir data/raw --out-csv data/processed/cot_disagg_futures_2016_2025.csv
-   python -m src.data.split_cot --in-csv data/processed/cot_disagg_futures_gold_crude_2016_2025.csv \
+   python data/make_dataset.py --raw-dir data/raw --out-csv data/processed/cot_disagg_futures_2006_2025.csv
+   python -m src.data.split_cot --in-csv data/processed/cot_disagg_futures_gold_crude_2006_2025.csv \
        --gold data/processed/cot_gold.csv --crude data/processed/cot_crude.csv
    # download crude and gold futures prices from Yahoo Finance
    python -m src.data.load_price
@@ -232,7 +232,8 @@ Likewise schedule a daily job to:
 requires a Google service account key (`GDRIVE_SA_KEY`) so the workflow can
 authenticate, though the script now fetches the COT Excel files directly from the
 CFTC website.  Set `RAW_DATA_DIR` if you want the files stored somewhere other
-than `src/data/raw`.
+than `src/data/raw`. Use `OUT_CSV_PATH` to change where the consolidated CSV
+is written (defaults to `src/data/processed/cot_disagg_futures_2006_2025.csv`).
 
 When executed it first makes sure the 2006–2016 historical archive is present
 and that yearly `cot_YYYY.xls` files for 2017–2025 exist, downloading any
@@ -258,7 +259,7 @@ Copy requirements.txt and install the dependencies.
 
 Copy the repository files.
 
-Set the environment variables (`GDRIVE_SA_KEY` and optionally `RAW_DATA_DIR`) at runtime (e.g. `docker run -e GDRIVE_SA_KEY=...`).
+Set the environment variables (`GDRIVE_SA_KEY` and optionally `RAW_DATA_DIR` or `OUT_CSV_PATH`) at runtime (e.g. `docker run -e GDRIVE_SA_KEY=...`).
 
 Run python scripts/weekly_etl.py as the container’s entrypoint.
 
@@ -266,7 +267,7 @@ Once built, this Docker image can be used in CI (GitHub Actions supports running
 
 In short:
 
-Define the required env var: `GDRIVE_SA_KEY` (plus `RAW_DATA_DIR` if you want a custom destination).
+Define the required env var: `GDRIVE_SA_KEY` (plus `RAW_DATA_DIR` or `OUT_CSV_PATH` if you want custom destinations).
 
 Store the service‑account key in GitHub secrets or pass it when running a Docker container.
 
@@ -283,7 +284,7 @@ The repository ships with a GitHub Actions workflow that runs every Friday at 3:
 ### Prerequisites
 - `GDRIVE_SA_KEY` – Google service account JSON stored as a secret.
 
-Set `RAW_DATA_DIR` to override the local download directory when running the script manually.
+Set `RAW_DATA_DIR` to override the local download directory and `OUT_CSV_PATH` to change the consolidated CSV location when running the script manually.
 
 You can trigger the ETL outside of the schedule via the **workflow_dispatch** button on GitHub or by running:
 
