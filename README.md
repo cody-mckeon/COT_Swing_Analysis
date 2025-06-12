@@ -228,49 +228,23 @@ Likewise schedule a daily job to:
 • Fetch yesterday’s close for GC (or GLD) and CL (or USO) via yfinance or a broker API
 • Append to prices/*.csv
 
-scripts/weekly_etl.py is meant for either a Colab or CI/Docker environment and requires several environment variables. At the top of the script it states:
+`scripts/weekly_etl.py` is intended for a CI or Docker environment.  It
+requires a Google service account key (`GDRIVE_SA_KEY`) so the workflow can
+authenticate, though the script now fetches the COT Excel files directly from the
+CFTC website.  Set `RAW_DATA_DIR` if you want the files stored somewhere other
+than `src/data/raw`.
 
-# This script is intended to run in GitHub Actions or a Docker container.
-# Ensure `GDRIVE_SA_KEY`, `RAW_DATA_FOLDER_ID` and `RAW_DATA_DIR` are set.
+When executed it first ensures that `cot_YYYY.xls` files exist for every year
+from 2008 through the current year, downloading any missing ones.  Once the
+files are in place the script runs the dataset building steps (`make_dataset.py`,
+`split_cot`, `load_price` and `build_classification_features`).
 
-The script detects the COLAB_ENV variable to decide whether to mount Google Drive:
+To run it manually install the requirements and export at least
+`GDRIVE_SA_KEY`:
 
-IS_COLAB = os.getenv("COLAB_ENV") == "1"
-if IS_COLAB:
-    RAW_DIR = Path("/content/drive/MyDrive/COT_Swing_Analysis/src/data/raw")
-else:
-    RAW_DIR = Path(os.getenv("RAW_DATA_DIR", "src/data/raw"))
-
-Its main entry point expects the folder ID and credentials:
-
-def main() -> None:
-    folder_id = os.getenv("RAW_DATA_FOLDER_ID")
-    if not folder_id:
-        logging.error({"error": "RAW_DATA_FOLDER_ID not set"})
-        sys.exit(1)
-
-    service = build_drive_service()
-    exit_code = download_folder(service, folder_id, RAW_DIR)
-    sys.exit(exit_code)
-
-To run it:
-
-Install dependencies from requirements.txt (pip install -r requirements.txt).
-
-Export the following environment variables:
-
-GDRIVE_SA_KEY – the service‑account JSON contents.
-
-RAW_DATA_FOLDER_ID – the Google Drive folder ID containing your raw files.
-
-RAW_DATA_DIR – local destination directory (defaults to src/data/raw).
-
-Optional COLAB_ENV=1 when running in Colab; otherwise omit.
-
-Execute the script:
-
+```bash
 python scripts/weekly_etl.py
-The script will authenticate with Google Drive using the service account, download all files from the specified folder, and place them in RAW_DATA_DIR. It logs progress and exits with a non‑zero code if a problem occurs.
+```
 
 Feature Engineering Orchestrator
 
@@ -283,7 +257,7 @@ Copy requirements.txt and install the dependencies.
 
 Copy the repository files.
 
-Set the environment variables (GDRIVE_SA_KEY, RAW_DATA_FOLDER_ID, RAW_DATA_DIR) at runtime (e.g., docker run -e GDRIVE_SA_KEY=...).
+Set the environment variables (`GDRIVE_SA_KEY` and optionally `RAW_DATA_DIR`) at runtime (e.g. `docker run -e GDRIVE_SA_KEY=...`).
 
 Run python scripts/weekly_etl.py as the container’s entrypoint.
 
@@ -291,13 +265,13 @@ Once built, this Docker image can be used in CI (GitHub Actions supports running
 
 In short:
 
-Define the required env vars: GDRIVE_SA_KEY, RAW_DATA_FOLDER_ID, and optionally RAW_DATA_DIR.
+Define the required env var: `GDRIVE_SA_KEY` (plus `RAW_DATA_DIR` if you want a custom destination).
 
-Store the service‑account key and folder ID in GitHub secrets or pass them when running a Docker container.
+Store the service‑account key in GitHub secrets or pass it when running a Docker container.
 
-Extend your GitHub workflow with a step that runs scripts/weekly_etl.py using those variables.
+Extend your GitHub workflow with a step that runs `scripts/weekly_etl.py` using that variable.
 
-Optionally add a Dockerfile that installs the requirements and runs the script. This would allow executing the same pro
+Optionally add a Dockerfile that installs the requirements and runs the script so the same process can execute in CI or any other environment.
 
 Chain the two above so that once price + COT are updated, you re‐run your build_classification_features.py (with the 95% threshold) to produce today’s feature row.
 
@@ -307,7 +281,6 @@ The repository ships with a GitHub Actions workflow that runs every Friday at 3:
 
 ### Prerequisites
 - `GDRIVE_SA_KEY` – Google service account JSON stored as a secret.
-- `RAW_DATA_FOLDER_ID` – Drive folder ID containing the raw COT files.
 
 Set `RAW_DATA_DIR` to override the local download directory when running the script manually.
 
