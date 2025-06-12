@@ -60,9 +60,11 @@ def main() -> int:
     raw_dir.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("RAW_DATA_FOLDER_ID", "")
 
-    end_year = max(datetime.now().year, 2017)
-    years = range(2008, end_year + 1)
-    if any(not (raw_dir / f"cot_{y}.xls").exists() for y in years if y <= 2016):
+    end_year = 2025
+    years = range(2017, end_year + 1)
+
+    hist_years = range(2008, 2017)
+    if any(not (raw_dir / f"cot_{y}.xls").exists() for y in hist_years):
         print("Downloading historical data 2006-2016…")
         download_history(raw_dir)
 
