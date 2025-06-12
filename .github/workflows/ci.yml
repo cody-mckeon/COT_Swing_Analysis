@@ -21,7 +21,7 @@ jobs:
 
     - name: Run CLI pipeline
       run: |
-        python -m src.data.split_cot --in-csv data/processed/cot_disagg_futures_gold_crude_2016_2025.csv --gold data/processed/cot_gold.csv --crude data/processed/cot_crude.csv
+        python -m src.data.split_cot --in-csv data/processed/cot_disagg_futures_gold_crude_2006_2025.csv --gold data/processed/cot_gold.csv --crude data/processed/cot_crude.csv
         python -m src.data.merge_cot_price --cot data/processed/cot_crude.csv --price data/prices/cl_weekly.csv --out data/processed/merged_cl.csv --market "CRUDE OIL"
         python -m src.features.build_features --merged data/processed/merged_cl.csv --out data/processed/features_cl.csv
         python -m src.data.build_classification_features --in data/processed/features_cl.csv --out data/processed/class_features_cl.csv --th 0

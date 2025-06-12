@@ -1,8 +1,8 @@
 stages:
   split_cot:
-    cmd: python -m src.data.split_cot --in-csv data/processed/cot_disagg_futures_gold_crude_2016_2025.csv --gold data/processed/cot_gold.csv --crude data/processed/cot_crude.csv
+    cmd: python -m src.data.split_cot --in-csv data/processed/cot_disagg_futures_gold_crude_2006_2025.csv --gold data/processed/cot_gold.csv --crude data/processed/cot_crude.csv
     deps:
-      - data/processed/cot_disagg_futures_gold_crude_2016_2025.csv
+      - data/processed/cot_disagg_futures_gold_crude_2006_2025.csv
     outs:
       - data/processed/cot_gold.csv
       - data/processed/cot_crude.csv
