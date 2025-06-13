@@ -102,8 +102,21 @@ def main() -> None:
     parser.add_argument("--end", default=DEFAULT_END, help="end date YYYY-MM-DD")
     parser.add_argument("--max-retries", type=int, default=DEFAULT_RETRIES, help="number of download retries")
     parser.add_argument("--retry-delay", type=int, default=DEFAULT_DELAY, help="seconds between retries")
+    parser.add_argument(
+        "--tickers",
+        default="GC=F,CL=F",
+        help="comma-separated list of tickers to download (default: GC=F,CL=F)",
+    )
 
-    for short, ticker in SYMBOLS.items():
+    args = parser.parse_args()
+
+    tickers = {
+        t.split("=")[0].upper(): t.strip()
+        for t in args.tickers.split(",")
+        if t.strip()
+    }
+
+    for short, ticker in tickers.items():
         daily = fetch_daily_history(ticker, args.start, args.end, args.max_retries, args.retry_delay)
         daily_csv = os.path.join(DATA_DIR, f"{short.lower()}_daily.csv")
         logger.info(f"Saving daily prices to {daily_csv}")
