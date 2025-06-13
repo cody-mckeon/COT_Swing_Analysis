@@ -60,9 +60,12 @@ def main() -> int:
     raw_dir.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("RAW_DATA_FOLDER_ID", "")
 
+    processed_dir = Path(os.getenv("PROCESSED_DIR", "src/data/processed"))
+    processed_dir.mkdir(parents=True, exist_ok=True)
+
     out_csv = os.getenv(
         "OUT_CSV_PATH",
-        "src/data/processed/cot_disagg_futures_2006_2025.csv",
+        str(processed_dir / "cot_disagg_futures_2006_2025.csv"),
     )
 
     end_year = 2025
@@ -95,9 +98,9 @@ def main() -> int:
             "--in-csv",
             out_csv,
             "--gold",
-            "src/data/processed/cot_gold.csv",
+            str(processed_dir / "cot_gold.csv"),
             "--crude",
-            "src/data/processed/cot_crude.csv",
+            str(processed_dir / "cot_crude.csv"),
         ])
         subprocess.check_call([
             sys.executable,
@@ -115,9 +118,9 @@ def main() -> int:
             "-m",
             "src.data.build_classification_features",
             "--in",
-            "src/data/processed/class_features_gc.csv",
+            str(processed_dir / "class_features_gc.csv"),
             "--out",
-            "src/data/processed/class_features_gc_extreme.csv",
+            str(processed_dir / "class_features_gc_extreme.csv"),
             "--th",
             "0.95",
         ])
@@ -126,9 +129,9 @@ def main() -> int:
             "-m",
             "src.data.build_classification_features",
             "--in",
-            "src/data/processed/class_features_cl.csv",
+            str(processed_dir / "class_features_cl.csv"),
             "--out",
-            "src/data/processed/class_features_cl_extreme.csv",
+            str(processed_dir / "class_features_cl_extreme.csv"),
             "--th",
             "0.95",
         ])

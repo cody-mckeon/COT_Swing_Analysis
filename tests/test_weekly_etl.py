@@ -74,10 +74,12 @@ def test_weekly_etl(tmp_path, monkeypatch):
         "GDRIVE_SA_KEY": json.dumps({"dummy": True}),
         "RAW_DATA_FOLDER_ID": "1",
         "RAW_DATA_DIR": str(tmp_path),
+        "PROCESSED_DIR": str(tmp_path / "processed"),
     }
     monkeypatch.setenv("GDRIVE_SA_KEY", env["GDRIVE_SA_KEY"])
     monkeypatch.setenv("RAW_DATA_FOLDER_ID", env["RAW_DATA_FOLDER_ID"])
     monkeypatch.setenv("RAW_DATA_DIR", env["RAW_DATA_DIR"])
+    monkeypatch.setenv("PROCESSED_DIR", env["PROCESSED_DIR"])
 
     exit_code = etl.main()
     assert exit_code == 0
