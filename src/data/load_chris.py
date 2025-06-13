@@ -1,3 +1,10 @@
+"""Download weekly continuous futures from Nasdaq Data Link CHRIS.
+
+This helper is deprecated because Nasdaq Data Link often fails or
+times out. Prefer :mod:`src.data.load_price` which pulls prices from
+Yahoo Finance instead.
+"""
+
 import os
 import logging
 import pandas as pd
