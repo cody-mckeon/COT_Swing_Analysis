@@ -96,6 +96,9 @@ def test_weekly_etl(tmp_path, monkeypatch):
     assert any(
         "make_dataset.py" in str(c[1]) if isinstance(c, list) else False for c in calls
     )
+    assert any(
+        "build_features" in " ".join(c) if isinstance(c, list) else False for c in calls
+    )
 
 
 def test_weekly_etl_upload(tmp_path, monkeypatch):

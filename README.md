@@ -246,8 +246,8 @@ If the container's filesystem is ephemeral, point `RAW_DATA_DIR` and
 When executed it first makes sure the 2006–2016 historical archive is present
 and that yearly `cot_YYYY.xls` files for 2017–2025 exist, downloading any
 missing ones.  Once the files are in place the script runs the dataset building
-steps (`make_dataset.py`, `split_cot`, `load_price` and
-`build_classification_features`).
+steps (`make_dataset.py`, `split_cot`, `load_price`, `merge_cot_price`,
+`build_features` and `build_classification_features`).
 
 To run it manually install the requirements and export at least
 `GDRIVE_SA_KEY`:

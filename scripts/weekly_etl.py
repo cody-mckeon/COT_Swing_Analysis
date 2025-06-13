@@ -129,9 +129,35 @@ def main() -> int:
             [
                 sys.executable,
                 "-m",
+                "src.data.merge_cot_price",
+                "--cot",
+                str(processed_dir / "cot_gold.csv"),
+                "--price",
+                str(Path("data/prices/gc_weekly.csv")),
+                "--out",
+                str(processed_dir / "merged_gc.csv"),
+                "--market",
+                "GOLD",
+            ]
+        )
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "src.features.build_features",
+                "--merged",
+                str(processed_dir / "merged_gc.csv"),
+                "--out",
+                str(processed_dir / "features_gc.csv"),
+            ]
+        )
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
                 "src.data.build_classification_features",
                 "--in",
-                str(processed_dir / "class_features_gc.csv"),
+                str(processed_dir / "features_gc.csv"),
                 "--out",
                 str(processed_dir / "class_features_gc_extreme.csv"),
                 "--th",
@@ -142,9 +168,35 @@ def main() -> int:
             [
                 sys.executable,
                 "-m",
+                "src.data.merge_cot_price",
+                "--cot",
+                str(processed_dir / "cot_crude.csv"),
+                "--price",
+                str(Path("data/prices/cl_weekly.csv")),
+                "--out",
+                str(processed_dir / "merged_cl.csv"),
+                "--market",
+                "CRUDE OIL",
+            ]
+        )
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "src.features.build_features",
+                "--merged",
+                str(processed_dir / "merged_cl.csv"),
+                "--out",
+                str(processed_dir / "features_cl.csv"),
+            ]
+        )
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
                 "src.data.build_classification_features",
                 "--in",
-                str(processed_dir / "class_features_cl.csv"),
+                str(processed_dir / "features_cl.csv"),
                 "--out",
                 str(processed_dir / "class_features_cl_extreme.csv"),
                 "--th",
