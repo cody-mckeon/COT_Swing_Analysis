@@ -1,3 +1,9 @@
+"""CLI wrapper for :func:`src.data.load_chris.fetch_weekly_chris`.
+
+This command is no longer actively used because Nasdaq Data Link
+requests are unreliable. Keeping it for reference only.
+"""
+
 import argparse
 import os
 from src.data.load_chris import fetch_weekly_chris

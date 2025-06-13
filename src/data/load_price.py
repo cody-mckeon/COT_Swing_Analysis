@@ -2,7 +2,7 @@
 Download historical crude oil and gold futures prices from Yahoo Finance.
 
 This script fetches daily data for ``CL=F`` and ``GC=F`` back to
-January 1, 2016 and saves both the raw daily prices and weekly
+June 13, 2006 and saves both the raw daily prices and weekly
 (Friday-close) resampled series under ``data/prices``.
 
 It supports retry logic to handle transient network or rate-limit errors.
@@ -39,7 +39,7 @@ SYMBOLS = {
     "CL": "CL=F",
     "GC": "GC=F",
 }
-DEFAULT_START = "2016-01-01"
+DEFAULT_START = "2006-06-13"
 DEFAULT_END = pd.Timestamp.today().strftime("%Y-%m-%d")
 DEFAULT_RETRIES = 5
 DEFAULT_DELAY = 5
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
 def fetch_weekly_close(
     ticker: str,
-    start_date: str = "2016-01-01",
+    start_date: str = "2006-06-13",
     save_dir: str = "data/prices/",
     max_retries: int = 3,
     retry_delay: int = 5,

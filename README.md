@@ -8,7 +8,7 @@ COT_Swing_Analysis/
 ├── data/
 │   ├── raw/               # yearly COT Excel files
 │   ├── processed/         # cleaned datasets and features
-│   └── prices/            # price data downloaded from Nasdaq Data Link
+│   └── prices/            # price data downloaded from Yahoo Finance
 ├── src/
 │   ├── data/              # dataset utilities
 │   ├── features/          # feature engineering
@@ -29,6 +29,7 @@ COT_Swing_Analysis/
        --gold data/processed/cot_gold.csv --crude data/processed/cot_crude.csv
    # download crude and gold futures prices from Yahoo Finance
    python -m src.data.load_price
+   # the older CHRIS-based downloader is kept only for reference.
    ```
 3. Reproduce the entire pipeline with DVC
    ```bash
