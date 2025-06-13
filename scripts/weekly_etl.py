@@ -159,6 +159,19 @@ def main() -> int:
                 "--in",
                 str(processed_dir / "features_gc.csv"),
                 "--out",
+                str(processed_dir / "class_features_gc.csv"),
+                "--th",
+                "0",
+            ]
+        )
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "src.data.build_classification_features",
+                "--in",
+                str(processed_dir / "features_gc.csv"),
+                "--out",
                 str(processed_dir / "class_features_gc_extreme.csv"),
                 "--th",
                 "0.95",
@@ -188,6 +201,19 @@ def main() -> int:
                 str(processed_dir / "merged_cl.csv"),
                 "--out",
                 str(processed_dir / "features_cl.csv"),
+            ]
+        )
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "src.data.build_classification_features",
+                "--in",
+                str(processed_dir / "features_cl.csv"),
+                "--out",
+                str(processed_dir / "class_features_cl.csv"),
+                "--th",
+                "0",
             ]
         )
         subprocess.check_call(

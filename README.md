@@ -45,9 +45,13 @@ COT_Swing_Analysis/
     python -m src.features.build_features \
        --merged data/processed/merged_gold.csv \
        --out data/processed/features_gc.csv
+    # risk‑on features for younger investors
+    python scripts/class_features_gc.py
+    # conservative overlay using the 95th percentile
     python -m src.data.build_classification_features \
        --in data/processed/features_gc.csv \
-       --out data/processed/class_features_gc_extreme.csv
+       --out data/processed/class_features_gc_extreme.csv \
+       --th 0.95
     python -m src.models.train_model \
        --features data/processed/features_gc.csv \
        --model models/model_gc.joblib
@@ -61,12 +65,16 @@ COT_Swing_Analysis/
         --price data/prices/cl_daily.csv \
         --out data/processed/merged_crude.csv \
         --market "CRUDE OIL"
-    python -m src.features.build_features \
-        --merged data/processed/merged_crude.csv \
-        --out data/processed/features_cl.csv
+   python -m src.features.build_features \
+       --merged data/processed/merged_crude.csv \
+       --out data/processed/features_cl.csv
+    # build risk‑on Crude features
+    python scripts/class_features_cl.py
+    # conservative overlay
     python -m src.data.build_classification_features \
         --in data/processed/features_cl.csv \
-        --out data/processed/class_features_cl_extreme.csv
+        --out data/processed/class_features_cl_extreme.csv \
+        --th 0.95
     python -m src.models.train_model \
         --features data/processed/features_cl.csv \
         --model models/model_cl.joblib
@@ -130,6 +138,15 @@ performance and generate a simple trading backtest.
 ### Gold Backtest
 
 ```bash
+# risk-on backtest
+python scripts/run_eval.py \
+  --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/class_features_gc.csv" \
+  --model    "src/models/best_model_gc.pkl" \
+  --test-start 2023-01-01 \
+  --commission 0.0005 \
+  --allow-shorts
+
+# conservative version using the overlay
 python scripts/run_eval.py \
   --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/class_features_gc_extreme.csv" \
   --model    "src/models/best_model_gc.pkl" \
@@ -148,6 +165,15 @@ python scripts/run_eval.py \
 ### Crude Backtest
 
 ```bash
+# risk-on backtest
+python scripts/run_eval.py \
+  --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/class_features_cl.csv" \
+  --model    "src/models/best_model_cl.pkl" \
+  --test-start 2023-01-01 \
+  --commission 0.0005 \
+  --allow-shorts
+
+# conservative version
 python scripts/run_eval.py \
   --features "/content/drive/MyDrive/Colab Notebooks/COT_Trading_System/src/data/processed/class_features_cl_extreme.csv" \
   --model    "src/models/best_model_cl.pkl" \
