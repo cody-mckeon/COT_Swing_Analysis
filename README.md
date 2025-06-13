@@ -27,9 +27,12 @@ COT_Swing_Analysis/
    python data/make_dataset.py --raw-dir data/raw --out-csv data/processed/cot_disagg_futures_2006_2025.csv
    python -m src.data.split_cot --in-csv data/processed/cot_disagg_futures_gold_crude_2006_2025.csv \
        --gold data/processed/cot_gold.csv --crude data/processed/cot_crude.csv
-   # download crude and gold futures prices from Yahoo Finance
-   python -m src.data.load_price
-   # the older CHRIS-based downloader is kept only for reference.
+    # download crude and gold futures prices from Yahoo Finance
+    python -m src.data.load_price
+    # this writes both *_daily.csv and *_weekly.csv under data/prices
+    # Use the *daily* files (gc_daily.csv / cl_daily.csv) when merging with COT
+    # because the weekly closes fall on Friday, not the Tuesday COT date
+    # the older CHRIS-based downloader is kept only for reference.
    ```
 3. Reproduce the entire pipeline with DVC
    ```bash

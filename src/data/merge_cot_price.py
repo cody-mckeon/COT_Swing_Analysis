@@ -60,7 +60,9 @@ def merge_cot_with_price(
     cot_csv:
         Path to the CSV containing disaggregated COT data for multiple markets.
     price_csv:
-        Path to the daily price data for a single instrument.
+        Path to the daily price data for a single instrument. The merge expects
+        Tuesday COT dates to appear in this file. Using the weekly CSVs (with
+        Friday closes) will result in no matching rows.
     out_csv:
         Where the merged dataset should be written.
     market:
