@@ -238,6 +238,7 @@ Use `OUT_CSV_PATH` to change where the consolidated CSV
 is written (defaults to `src/data/processed/cot_disagg_futures_2006_2025.csv`).
 Set `PROCESSED_DIR` to move all processed outputs (gold/crude splits, feature
 files) to a different location.
+Use `PROCESSED_FOLDER_ID` to upload those outputs to a Google Drive folder.
 If the container's filesystem is ephemeral, point `RAW_DATA_DIR` and
 `PROCESSED_DIR` at a mounted drive so the downloads and outputs persist.
 
@@ -265,7 +266,7 @@ Copy requirements.txt and install the dependencies.
 
 Copy the repository files.
 
-Set the environment variables (`GDRIVE_SA_KEY` and optionally `RAW_DATA_DIR`, `PROCESSED_DIR` or `OUT_CSV_PATH`) at runtime (e.g. `docker run -e GDRIVE_SA_KEY=...`).
+Set the environment variables (`GDRIVE_SA_KEY` and optionally `RAW_DATA_DIR`, `PROCESSED_DIR`, `PROCESSED_FOLDER_ID` or `OUT_CSV_PATH`) at runtime (e.g. `docker run -e GDRIVE_SA_KEY=...`).
 
 Run python scripts/weekly_etl.py as the container’s entrypoint.
 
@@ -273,7 +274,7 @@ Once built, this Docker image can be used in CI (GitHub Actions supports running
 
 In short:
 
-Define the required env var: `GDRIVE_SA_KEY` (plus `RAW_DATA_DIR`, `PROCESSED_DIR` or `OUT_CSV_PATH` if you want custom destinations).
+Define the required env var: `GDRIVE_SA_KEY` (plus `RAW_DATA_DIR`, `PROCESSED_DIR`, `PROCESSED_FOLDER_ID` or `OUT_CSV_PATH` if you want custom destinations).
 
 Store the service‑account key in GitHub secrets or pass it when running a Docker container.
 
@@ -291,6 +292,7 @@ The repository ships with a GitHub Actions workflow that runs every Friday at 3:
 - `GDRIVE_SA_KEY` – Google service account JSON stored as a secret.
 
 Set `RAW_DATA_DIR` to override the local download directory and `OUT_CSV_PATH` to change the consolidated CSV location when running the script manually. Use `PROCESSED_DIR` if you need the processed outputs persisted to a mounted drive.
+Provide `PROCESSED_FOLDER_ID` to upload the processed CSVs to a Google Drive folder after each run.
 
 You can trigger the ETL outside of the schedule via the **workflow_dispatch** button on GitHub or by running:
 

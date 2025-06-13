@@ -11,6 +11,7 @@ from pathlib import Path
 import requests
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 
 
 def _save_excel_from_zip(zf: zipfile.ZipFile, dest: Path) -> None:
@@ -41,20 +42,24 @@ def download_year(year: int, dest: Path) -> None:
 
 def download_history(dest: Path) -> None:
     """Download 2006-2016 historical ZIP and extract all years."""
-    url = (
-        "https://www.cftc.gov/files/dea/history/"
-        "fut_disagg_xls_hist_2006_2016.zip"
-    )
+    url = "https://www.cftc.gov/files/dea/history/" "fut_disagg_xls_hist_2006_2016.zip"
     resp = requests.get(url)
     resp.raise_for_status()
     with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
         _save_excel_from_zip(zf, dest)
 
 
+def upload_file(service, path: Path, folder_id: str) -> None:
+    """Upload *path* to Google Drive *folder_id*."""
+    file_metadata = {"name": path.name, "parents": [folder_id]}
+    media = MediaFileUpload(str(path))
+    service.files().create(body=file_metadata, media_body=media).execute()
+
+
 def main() -> int:
     creds_info = json.loads(os.environ["GDRIVE_SA_KEY"])
     creds = service_account.Credentials.from_service_account_info(creds_info)
-    build("drive", "v3", credentials=creds)  # noqa: F841
+    drive_service = build("drive", "v3", credentials=creds)
 
     raw_dir = Path(os.getenv("RAW_DATA_DIR", "src/data/raw"))
     raw_dir.mkdir(parents=True, exist_ok=True)
@@ -62,6 +67,7 @@ def main() -> int:
 
     processed_dir = Path(os.getenv("PROCESSED_DIR", "src/data/processed"))
     processed_dir.mkdir(parents=True, exist_ok=True)
+    processed_folder_id = os.getenv("PROCESSED_FOLDER_ID", "")
 
     out_csv = os.getenv(
         "OUT_CSV_PATH",
@@ -83,58 +89,73 @@ def main() -> int:
             download_year(year, raw_dir)
 
     try:
-        subprocess.check_call([
-            sys.executable,
-            "src/data/make_dataset.py",
-            "--raw-dir",
-            str(raw_dir),
-            "--out-csv",
-            out_csv,
-        ])
-        subprocess.check_call([
-            sys.executable,
-            "-m",
-            "src.data.split_cot",
-            "--in-csv",
-            out_csv,
-            "--gold",
-            str(processed_dir / "cot_gold.csv"),
-            "--crude",
-            str(processed_dir / "cot_crude.csv"),
-        ])
-        subprocess.check_call([
-            sys.executable,
-            "-m",
-            "src.data.load_price",
-            "--tickers",
-            "GC=F,CL=F",
-            "--max-retries",
-            "5",
-            "--retry-delay",
-            "10",
-        ])
-        subprocess.check_call([
-            sys.executable,
-            "-m",
-            "src.data.build_classification_features",
-            "--in",
-            str(processed_dir / "class_features_gc.csv"),
-            "--out",
-            str(processed_dir / "class_features_gc_extreme.csv"),
-            "--th",
-            "0.95",
-        ])
-        subprocess.check_call([
-            sys.executable,
-            "-m",
-            "src.data.build_classification_features",
-            "--in",
-            str(processed_dir / "class_features_cl.csv"),
-            "--out",
-            str(processed_dir / "class_features_cl_extreme.csv"),
-            "--th",
-            "0.95",
-        ])
+        subprocess.check_call(
+            [
+                sys.executable,
+                "src/data/make_dataset.py",
+                "--raw-dir",
+                str(raw_dir),
+                "--out-csv",
+                out_csv,
+            ]
+        )
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "src.data.split_cot",
+                "--in-csv",
+                out_csv,
+                "--gold",
+                str(processed_dir / "cot_gold.csv"),
+                "--crude",
+                str(processed_dir / "cot_crude.csv"),
+            ]
+        )
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "src.data.load_price",
+                "--tickers",
+                "GC=F,CL=F",
+                "--max-retries",
+                "5",
+                "--retry-delay",
+                "10",
+            ]
+        )
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "src.data.build_classification_features",
+                "--in",
+                str(processed_dir / "class_features_gc.csv"),
+                "--out",
+                str(processed_dir / "class_features_gc_extreme.csv"),
+                "--th",
+                "0.95",
+            ]
+        )
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "src.data.build_classification_features",
+                "--in",
+                str(processed_dir / "class_features_cl.csv"),
+                "--out",
+                str(processed_dir / "class_features_cl_extreme.csv"),
+                "--th",
+                "0.95",
+            ]
+        )
+
+        if processed_folder_id:
+            for csv in processed_dir.glob("*.csv"):
+                upload_file(drive_service, csv, processed_folder_id)
+
     except subprocess.CalledProcessError as exc:
         return exc.returncode
     return 0
